@@ -11,7 +11,7 @@ documentation = "https://docs.rs/sendblue"
 homepage = "https://github.com/NewtTheWolf/sendblue-rs"
 readme = "README.md"
 keywords = ["iMessage", "SMS", "SendBlue", "API-Client", "Wrapper"]
-categories = ["communications", "network-programming", "api-tools", "development-tools"]
+categories = ["api-bindings", "asynchronous", "network-programming", "web-programming", "development-tools"]
 
 [dependencies]
 reqwest = { version = "0.12", features = ["json"] }
