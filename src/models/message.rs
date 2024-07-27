@@ -7,11 +7,12 @@ use crate::{
     models::{CallbackUrl, MediaUrl, SendStyle},
     SendableMessage, SendblueError,
 };
+use chrono::{DateTime as ChronoDateTime, Utc};
 use phonenumber::PhoneNumber;
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationError};
 
-use super::Status;
+use super::{ErrorCode, Status};
 
 /// Message to be sent using the Sendblue API
 ///
@@ -51,9 +52,10 @@ impl SendableMessage for Message {
 }
 
 /// Response from the Sendblue API after sending a message
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MessageResponse {
     /// The email of the account
+    #[serde(rename = "accountEmail")]
     pub account_email: String,
     /// The content of the message
     pub content: String,
@@ -63,22 +65,99 @@ pub struct MessageResponse {
     pub status: Status,
     /// The error code if any (optional)
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub error_code: Option<i32>,
+    pub error_code: Option<ErrorCode>,
     /// The error message if any (optional)
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub error_message: Option<String>,
     /// The handle of the message
+    #[serde(rename = "message_handle")]
     pub message_handle: String,
     /// The date the message was sent
-    pub date_sent: String,
+    #[serde(rename = "date_sent", with = "chrono::serde::ts_seconds")]
+    pub date_sent: ChronoDateTime<Utc>,
     /// The date the message was updated
-    pub date_updated: String,
+    #[serde(rename = "date_updated", with = "chrono::serde::ts_seconds")]
+    pub date_updated: ChronoDateTime<Utc>,
     /// The sender's phone number
+    #[serde(rename = "from_number")]
     pub from_number: PhoneNumber,
     /// The recipient's phone number
+    #[serde(rename = "number")]
     pub number: PhoneNumber,
+    /// The recipient's phone number (alternative)
+    #[serde(rename = "to_number")]
+    pub to_number: PhoneNumber,
+    /// Whether the message was downgraded
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub was_downgraded: Option<bool>,
+    /// The plan associated with the message
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub plan: Option<String>,
+    /// The URL of the media
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub media_url: Option<String>,
+    /// The type of the message
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub message_type: Option<String>,
+    /// The group ID associated with the message
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub group_id: Option<String>,
+    /// The participants in the message
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub participants: Option<Vec<String>>,
+    /// The send style of the message
+    #[serde(rename = "send_style")]
+    pub send_style: String,
     /// Whether the recipient opted out
+    #[serde(rename = "opted_out")]
     pub opted_out: bool,
+    /// The error detail if any (optional)
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub error_detail: Option<String>,
+}
+
+/// Payload for the status callback
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MessageStatusCallback {
+    /// The email of the account
+    #[serde(rename = "accountEmail")]
+    pub account_email: String,
+    /// The content of the message
+    pub content: String,
+    /// Whether the message is outbound
+    pub is_outbound: bool,
+    /// The status of the message
+    pub status: Status,
+    /// The error code if any (optional)
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub error_code: Option<ErrorCode>,
+    /// The error message if any (optional)
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub error_message: Option<String>,
+    /// The handle of the message
+    #[serde(rename = "message_handle")]
+    pub message_handle: String,
+    /// The date the message was sent
+    #[serde(rename = "date_sent", with = "chrono::serde::ts_seconds")]
+    pub date_sent: ChronoDateTime<Utc>,
+    /// The date the message was updated
+    #[serde(rename = "date_updated", with = "chrono::serde::ts_seconds")]
+    pub date_updated: ChronoDateTime<Utc>,
+    /// The sender's phone number
+    #[serde(rename = "from_number")]
+    pub from_number: PhoneNumber,
+    /// The recipient's phone number
+    #[serde(rename = "number")]
+    pub number: PhoneNumber,
+    /// The recipient's phone number (alternative)
+    #[serde(rename = "to_number")]
+    pub to_number: PhoneNumber,
+    /// Whether the message was downgraded
+    #[serde(rename = "was_downgraded")]
+    pub was_downgraded: bool,
+    /// The plan associated with the message
+    #[serde(rename = "plan")]
+    pub plan: String,
 }
 
 /// Request parameters for getting messages

@@ -1,11 +1,10 @@
 [package]
 name = "sendblue"
-version = "1.0.0"
+version = "0.1.0"
 edition = "2021"
 rust-version = "1.79"
 authors = ["NewtTheWolf <dominik@spitzli.dev>"]
 description = "SendBlue is a Rust library that provides an API client for interacting with the SendBlue REST API, enabling businesses to integrate iMessage and SMS services into their applications."
-license = "MIT"
 license-file = "LICENSE"
 repository = "https://github.com/NewtTheWolf/sendblue-rs"
 documentation = "https://docs.rs/sendblue"
@@ -25,6 +24,7 @@ validator = { version = "0.18", features = ["derive"] }
 regex = "1.10"
 url = "2.5.2"
 phonenumber = "0.3.6"
+chrono = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }

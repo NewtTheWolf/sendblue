@@ -16,10 +16,11 @@ pub use callback_url::CallbackUrl;
 pub use evaluate_service::{EvaluateService, EvaluateServiceBuilder, EvaluateServiceResponse};
 pub use media_url::MediaUrl;
 pub use message::{
-    GetMessagesParams, GetMessagesParamsBuilder, GetMessagesResponse, GroupMessage,
-    GroupMessageResponse, Message, MessageBuilder, MessageResponse, DateTime, RetrievedMessage
+    DateTime, GetMessagesParams, GetMessagesParamsBuilder, GetMessagesResponse, GroupMessage,
+    GroupMessageResponse, Message, MessageBuilder, MessageResponse, MessageStatusCallback,
+    RetrievedMessage,
 };
 pub use send_style::SendStyle;
-pub use status::Status;
+pub use status::{ErrorCode, Status};
 pub use typing_indicator::{TypingIndicator, TypingIndicatorResponse, TypingIndicatorStatus};
 pub use voice_note::VoiceNote;
