@@ -10,7 +10,7 @@ repository = "https://github.com/NewtTheWolf/sendblue-rs"
 documentation = "https://docs.rs/sendblue"
 homepage = "https://github.com/NewtTheWolf/sendblue-rs"
 readme = "README.md"
-keywords = ["iMessage", "SMS", "API Client", "SendBlue", "Business Communication", "Automation", "CRM Integration", "Customer Engagement", "Voice Notes", "Group Messaging", "Zapier Integration"]
+keywords = ["iMessage", "SMS", "API Client", "SendBlue", "Automation"]
 categories = ["communications", "network-programming", "api-tools", "automation", "business-applications", "customer-relationship-management"]
 
 [dependencies]
