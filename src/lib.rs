@@ -497,7 +497,7 @@ impl SendblueClient {
 mod tests {
     use super::*;
     use mockito::{Matcher, Server};
-    use phonenumber::PhoneNumber;
+    
     use test_generator::test_resources;
 
     async fn setup_client() -> SendblueClient {
