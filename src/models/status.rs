@@ -13,6 +13,7 @@ pub enum Status {
     Sent,
     Delivered,
     Read,
+    Received,
 }
 
 /// Error codes returned by the Sendblue API

@@ -4,10 +4,15 @@
 //! individual and group messages, their builders, and response structures.
 
 use crate::{
-    models::{CallbackUrl, MediaUrl, SendStyle},
-    SendableMessage, SendblueError,
+    models::{
+        /* phonenumber::deserialize_phone_number, */ deserialize_option_phone_number,
+        deserialize_option_vec_phone_number, deserialize_phone_number,
+        deserialize_vec_phone_number, CallbackUrl, MediaUrl, SendStyle,
+    },
+    traits::SendableMessage,
+    SendblueError,
 };
-use chrono::{DateTime as ChronoDateTime, Utc};
+use chrono::{DateTime, Utc};
 use phonenumber::PhoneNumber;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -29,6 +34,7 @@ use super::{ErrorCode, Status};
 #[derive(Serialize, Deserialize, Validate, Debug)]
 pub struct Message {
     /// The recipient's phone number in E.164 format
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub number: PhoneNumber,
     /// The content of the message (optional)
     #[validate(length(min = 1))]
@@ -70,22 +76,19 @@ pub struct MessageResponse {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub error_message: Option<String>,
     /// The handle of the message
-    #[serde(rename = "message_handle")]
     pub message_handle: String,
     /// The date the message was sent
-    #[serde(rename = "date_sent", with = "chrono::serde::ts_seconds")]
-    pub date_sent: ChronoDateTime<Utc>,
+    pub date_sent: DateTime<Utc>,
     /// The date the message was updated
-    #[serde(rename = "date_updated", with = "chrono::serde::ts_seconds")]
-    pub date_updated: ChronoDateTime<Utc>,
+    pub date_updated: DateTime<Utc>,
     /// The sender's phone number
-    #[serde(rename = "from_number")]
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub from_number: PhoneNumber,
     /// The recipient's phone number
-    #[serde(rename = "number")]
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub number: PhoneNumber,
     /// The recipient's phone number (alternative)
-    #[serde(rename = "to_number")]
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub to_number: PhoneNumber,
     /// Whether the message was downgraded
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -106,10 +109,8 @@ pub struct MessageResponse {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub participants: Option<Vec<String>>,
     /// The send style of the message
-    #[serde(rename = "send_style")]
-    pub send_style: String,
+    pub send_style: SendStyle,
     /// Whether the recipient opted out
-    #[serde(rename = "opted_out")]
     pub opted_out: bool,
     /// The error detail if any (optional)
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -135,28 +136,24 @@ pub struct MessageStatusCallback {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub error_message: Option<String>,
     /// The handle of the message
-    #[serde(rename = "message_handle")]
     pub message_handle: String,
     /// The date the message was sent
-    #[serde(rename = "date_sent", with = "chrono::serde::ts_seconds")]
-    pub date_sent: ChronoDateTime<Utc>,
+    pub date_sent: DateTime<Utc>,
     /// The date the message was updated
-    #[serde(rename = "date_updated", with = "chrono::serde::ts_seconds")]
-    pub date_updated: ChronoDateTime<Utc>,
+    pub date_updated: DateTime<Utc>,
     /// The sender's phone number
-    #[serde(rename = "from_number")]
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub from_number: PhoneNumber,
     /// The recipient's phone number
-    #[serde(rename = "number")]
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub number: PhoneNumber,
     /// The recipient's phone number (alternative)
-    #[serde(rename = "to_number")]
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub to_number: PhoneNumber,
     /// Whether the message was downgraded
-    #[serde(rename = "was_downgraded")]
-    pub was_downgraded: bool,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub was_downgraded: Option<bool>,
     /// The plan associated with the message
-    #[serde(rename = "plan")]
     pub plan: String,
 }
 
@@ -178,6 +175,7 @@ pub struct MessageStatusCallback {
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct GetMessagesParams {
     pub cid: Option<String>,
+    #[serde(deserialize_with = "deserialize_option_phone_number")]
     pub number: Option<PhoneNumber>,
     pub limit: Option<u32>,
     pub offset: Option<u32>,
@@ -191,7 +189,7 @@ pub struct GetMessagesParams {
 /// ```
 /// use sendblue::models::RetrievedMessage;
 /// use sendblue::Status;
-/// use sendblue::DateTime;
+/// use sendblue::DateTime<Utc>;
 ///
 /// let message = RetrievedMessage {
 ///     date: "2023-08-15T16:04:38.866Z".into(),
@@ -210,8 +208,8 @@ pub struct GetMessagesParams {
 ///     status: Status::Queued,
 ///     error_message: None,
 ///     to_number: Some(phonenumber::parse(None, "+1234567890").unwrap()),
-///     date_sent: Some(DateTime { seconds: 1695327725, nanoseconds: 66000000 }),
-///     date_updated: Some(DateTime { seconds: 1695327725, nanoseconds: 456000000 }),
+///     date_sent: Some(DateTime<Utc> { seconds: 1695327725, nanoseconds: 66000000 }),
+///     date_updated: Some(DateTime<Utc> { seconds: 1695327725, nanoseconds: 456000000 }),
 ///     error_detail: None,
 ///     phone_id: Some("worker_5s_spacegray_1".into()),
 ///     group_id: Some("".into()),
@@ -223,11 +221,12 @@ pub struct GetMessagesParams {
 pub struct RetrievedMessage {
     pub date: String,
     pub allow_sms: Option<bool>,
-    pub send_style: Option<String>,
+    pub send_style: Option<SendStyle>,
     pub message_type: String,
     pub uuid: String,
     pub media_url: Option<String>,
     pub content: Option<String>,
+    #[serde(deserialize_with = "deserialize_option_phone_number")]
     pub number: Option<PhoneNumber>,
     pub is_outbound: bool,
     pub account_email: String,
@@ -236,34 +235,16 @@ pub struct RetrievedMessage {
     pub row_id: Option<String>,
     pub status: Status,
     pub error_message: Option<String>,
+    #[serde(deserialize_with = "deserialize_option_phone_number")]
     pub to_number: Option<PhoneNumber>,
-    pub date_sent: Option<DateTime>,
-    pub date_updated: Option<DateTime>,
+    pub date_sent: Option<DateTime<Utc>>,
+    pub date_updated: Option<DateTime<Utc>>,
     pub error_detail: Option<String>,
     pub phone_id: Option<String>,
     pub group_id: Option<String>,
+    #[serde(deserialize_with = "deserialize_option_phone_number")]
     pub from_number: Option<PhoneNumber>,
     pub error_code: Option<i32>,
-}
-
-/// DateTime structure for timestamp fields
-///
-/// # Examples
-///
-/// ```
-/// use sendblue::models::DateTime;
-///
-/// let datetime = DateTime {
-///     seconds: 1695327725,
-///     nanoseconds: 66000000,
-/// };
-/// ```
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DateTime {
-    #[serde(rename = "_seconds")]
-    pub seconds: i64,
-    #[serde(rename = "_nanoseconds")]
-    pub nanoseconds: i32,
 }
 
 /// Response from the Sendblue API for getting messages
@@ -274,7 +255,7 @@ pub struct DateTime {
 /// use sendblue::models::GetMessagesResponse;
 /// use sendblue::message::RetrievedMessage;
 /// use sendblue::Status;
-/// use sendblue::DateTime;
+/// use sendblue::DateTime<Utc>;
 ///
 /// let response = GetMessagesResponse {
 ///     messages: vec![
@@ -295,8 +276,8 @@ pub struct DateTime {
 ///             status: Status::Queued,
 ///             error_message: None,
 ///             to_number: Some(phonenumber::parse(None, "+1234567890").unwrap()),
-///             date_sent: Some(DateTime { seconds: 1695327725, nanoseconds: 66000000 }),
-///             date_updated: Some(DateTime { seconds: 1695327725, nanoseconds: 456000000 }),
+///             date_sent: Some(DateTime<Utc> { seconds: 1695327725, nanoseconds: 66000000 }),
+///             date_updated: Some(DateTime<Utc> { seconds: 1695327725, nanoseconds: 456000000 }),
 ///             error_detail: None,
 ///             phone_id: Some("worker_5s_spacegray_1".into()),
 ///             group_id: Some("".into()),
@@ -319,7 +300,7 @@ pub struct GetMessagesResponse {
 /// use sendblue::models::GroupMessage;
 /// use sendblue::MediaUrl;
 /// use sendblue::CallbackUrl;
-/// use sendblue::Url;
+/// use sendblue::traits::Url;
 ///
 /// let request = GroupMessage {
 ///     numbers: Some(vec![phonenumber::parse(None, "+19998887777").unwrap(), phonenumber::parse(None, "+17778889999").unwrap()]),
@@ -333,6 +314,7 @@ pub struct GetMessagesResponse {
 #[derive(Serialize, Deserialize, Validate, Debug)]
 pub struct GroupMessage {
     /// An array of E.164-formatted phone numbers of the desired recipients in a group chat.
+    #[serde(deserialize_with = "deserialize_option_vec_phone_number")]
     pub numbers: Option<Vec<PhoneNumber>>,
     /// The group ID to message an existing group.
     pub group_id: Option<String>,
@@ -380,8 +362,10 @@ pub struct GroupMessageResponse {
     /// The date the message was updated
     pub date_updated: String,
     /// The sender's phone number
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub from_number: PhoneNumber,
     /// The recipient's phone numbers
+    #[serde(deserialize_with = "deserialize_vec_phone_number")]
     pub numbers: Vec<PhoneNumber>,
     /// Whether the message was downgraded (optional)
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -463,7 +447,7 @@ impl MessageBuilder<Message> {
     ///
     /// ```
     /// use sendblue::models::{MessageBuilder, MediaUrl};
-    /// use sendblue::Url;
+    /// use sendblue::traits::Url;
     ///
     /// let builder = MessageBuilder::new(phonenumber::parse(None, "+1234567890").unwrap())
     ///     .media_url(MediaUrl::new("https://example.com/media.jpg").unwrap());
@@ -485,7 +469,7 @@ impl MessageBuilder<Message> {
     ///
     /// ```
     /// use sendblue::models::{MessageBuilder, CallbackUrl};
-    /// use sendblue::Url;
+    /// use sendblue::traits::Url;
     ///
     /// let builder = MessageBuilder::new(phonenumber::parse(None, "+1234567890").unwrap())
     ///     .status_callback(CallbackUrl::new("https://example.com/message-status/1234abcd").unwrap());
@@ -645,7 +629,7 @@ impl MessageBuilder<GroupMessage> {
     ///
     /// ```
     /// use sendblue::models::{MessageBuilder, MediaUrl};
-    /// use sendblue::Url;
+    /// use sendblue::traits::Url;
     ///
     /// let builder = MessageBuilder::new_group()
     ///     .media_url(MediaUrl::new("https://example.com/media.jpg").unwrap());
@@ -667,7 +651,7 @@ impl MessageBuilder<GroupMessage> {
     ///
     /// ```
     /// use sendblue::models::{MessageBuilder, CallbackUrl};
-    /// use sendblue::Url;
+    /// use sendblue::traits::Url;
     ///
     /// let builder = MessageBuilder::new_group()
     ///     .status_callback(CallbackUrl::new("https://example.com/message-status/1234abcd").unwrap());
@@ -758,8 +742,10 @@ impl MessageBuilder<GroupMessage> {
 ///     .from_date(Some("2023-06-15 12:00:00".into()))
 ///     .build();
 /// ```
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetMessagesParamsBuilder {
     cid: Option<String>,
+    #[serde(deserialize_with = "deserialize_option_phone_number")]
     number: Option<PhoneNumber>,
     limit: Option<u32>,
     offset: Option<u32>,

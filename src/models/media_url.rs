@@ -2,7 +2,7 @@
 //!
 //! This module provides the data model for media URLs used in the Sendblue API.
 
-use crate::Url;
+use crate::traits::Url;
 use serde::{Deserialize, Serialize};
 use url::Url as RawUrl;
 use validator::ValidationError;
@@ -13,7 +13,7 @@ use validator::ValidationError;
 ///
 /// ```
 /// use sendblue::models::MediaUrl;
-/// use crate::sendblue::Url;
+/// use sendblue::traits::Url;
 ///
 /// let media_url = MediaUrl::new("https://example.com/media.jpg").unwrap();
 /// ```

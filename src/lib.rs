@@ -142,6 +142,10 @@
 //! }
 //! ```
 
+use models::{
+    EvaluateService, EvaluateServiceResponse, GetMessagesParams, GetMessagesResponse,
+    MessageResponse, TypingIndicatorResponse,
+};
 use phonenumber::PhoneNumber;
 use reqwest::{header::HeaderMap, Client};
 
@@ -151,8 +155,7 @@ pub mod prelude;
 pub mod traits;
 
 pub use error::SendblueError;
-pub use models::*;
-pub use traits::*;
+use traits::SendableMessage;
 
 static BASE_URL: &str = "https://api.sendblue.co/api";
 
@@ -497,6 +500,10 @@ impl SendblueClient {
 mod tests {
     use super::*;
     use httpmock::prelude::*;
+    use models::{
+        EvaluateServiceBuilder, GetMessagesParamsBuilder, GroupMessage, MessageBuilder, Status,
+        TypingIndicatorStatus,
+    };
     use phonenumber::parse;
     use serde_json::json;
 
@@ -669,7 +676,8 @@ mod tests {
                             "from_number": "+10722971673",
                             "error_code": 22,
                             "row_id": "4444",
-                            "status": "ERROR"
+                            "status": "ERROR",
+                            "message_type": "message"
                         }
                     ]
                 }));
