@@ -215,7 +215,7 @@ impl SendblueClient {
     /// * `SendblueClient` - A new Sendblue client instance
     ///
     /// This is a private function and not intended for public use.
-    fn new_with_url(api_key: String, api_secret: String, base_url: String) -> Self {
+    pub fn new_with_url(api_key: String, api_secret: String, base_url: String) -> Self {
         SendblueClient {
             api_key,
             api_secret,
@@ -497,7 +497,7 @@ impl SendblueClient {
 mod tests {
     use super::*;
     use mockito::{Matcher, Server};
-    
+
     use test_generator::test_resources;
 
     async fn setup_client() -> SendblueClient {
