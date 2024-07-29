@@ -3,7 +3,7 @@ name: Release Crate
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   package_and_publish:
