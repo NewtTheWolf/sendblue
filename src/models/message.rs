@@ -10,7 +10,7 @@ use crate::{
 use chrono::{DateTime as ChronoDateTime, Utc};
 use phonenumber::PhoneNumber;
 use serde::{Deserialize, Serialize};
-use validator::{Validate, ValidationError};
+use validator::Validate;
 
 use super::{ErrorCode, Status};
 
