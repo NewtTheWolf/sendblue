@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// * `Sent` - The typing indicator was sent successfully
 /// * `Error` - An error occurred while sending the typing indicator
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum TypingIndicatorStatus {
     Sent,
