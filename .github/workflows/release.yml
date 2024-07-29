@@ -5,6 +5,11 @@ on:
     branches:
       - master
 
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
 jobs:
   package_and_publish:
     name: Package and Publish
