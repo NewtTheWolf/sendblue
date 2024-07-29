@@ -498,8 +498,6 @@ mod tests {
     use super::*;
     use mockito::{Matcher, Server};
 
-    use test_generator::test_resources;
-
     async fn setup_client() -> SendblueClient {
         let server = Server::new();
         let base_url = server.url();
@@ -509,8 +507,8 @@ mod tests {
         SendblueClient::new_with_url(api_key.into(), api_secret.into(), base_url)
     }
 
-    #[test_resources("tests/message_case.json")]
-    async fn test_send_message(case: &str) {
+    #[tokio::test]
+    async fn test_send_message() {
         let client = setup_client().await;
         let mut server = Server::new();
 
@@ -519,7 +517,7 @@ mod tests {
             .with_body(r#"{"account_email": "test@example.com", "content": "Hello, world!", "is_outbound": true, "status": "QUEUED", "message_handle": "handle123", "date_sent": "2023-07-26T12:00:00Z", "date_updated": "2023-07-26T12:00:00Z", "from_number": "+1234567890", "number": "+1234567890"}"#)
             .create();
 
-        let message = MessageBuilder::new(phonenumber::parse(None, case).unwrap())
+        let message = MessageBuilder::new(phonenumber::parse(None, "+1234567890").unwrap())
             .content("Hello, world!".into())
             .build()
             .unwrap();
@@ -529,8 +527,8 @@ mod tests {
         assert!(result.is_ok(), "Failed to send message: {:?}", result.err());
     }
 
-    #[test_resources("tests/group_message_case.json")]
-    async fn test_send_group_message(case: &str) {
+    #[tokio::test]
+    async fn test_send_group_message() {
         let client = setup_client().await;
         let mut server = Server::new();
 
@@ -541,7 +539,7 @@ mod tests {
 
         let group_message = MessageBuilder::<GroupMessage>::new_group()
             .numbers(vec![
-                phonenumber::parse(None, case).unwrap(),
+                phonenumber::parse(None, "+1234567890").unwrap(),
                 phonenumber::parse(None, "+0987654321").unwrap(),
             ])
             .content("Hello, group!".into())
@@ -557,8 +555,8 @@ mod tests {
         );
     }
 
-    #[test_resources("tests/get_messages_case.json")]
-    async fn test_get_messages(case: &str) {
+    #[tokio::test]
+    async fn test_get_messages() {
         let client = setup_client().await;
         let mut server = Server::new();
 
@@ -571,7 +569,7 @@ mod tests {
         let params = GetMessagesParamsBuilder::new()
             .limit(Some(50))
             .offset(Some(0))
-            .number(Some(phonenumber::parse(None, case).unwrap()))
+            .number(Some(phonenumber::parse(None, "+1234567890").unwrap()))
             .from_date(Some("2023-06-15 12:00:00".into()))
             .cid(None)
             .build();
@@ -581,8 +579,8 @@ mod tests {
         assert!(result.is_ok(), "Failed to get messages: {:?}", result.err());
     }
 
-    #[test_resources("tests/typing_indicator_case.json")]
-    async fn test_send_typing_indicator(case: &str) {
+    #[tokio::test]
+    async fn test_send_typing_indicator() {
         let client = setup_client().await;
         let mut server = Server::new();
 
@@ -592,7 +590,7 @@ mod tests {
             .with_body(r#"{"number": "+1234567890", "status": "SENT", "error_message": null}"#)
             .create();
 
-        let number = phonenumber::parse(None, case).unwrap();
+        let number = phonenumber::parse(None, "+1234567890").unwrap();
         let result = tokio_test::block_on(client.send_typing_indicator(&number));
 
         assert!(
@@ -602,8 +600,8 @@ mod tests {
         );
     }
 
-    #[test_resources("tests/evaluate_service_case.json")]
-    async fn test_evaluate_service(case: &str) {
+    #[tokio::test]
+    async fn test_evaluate_service() {
         let client = setup_client().await;
         let mut server = Server::new();
 
@@ -615,7 +613,7 @@ mod tests {
             .create();
 
         let evaluate_service = EvaluateServiceBuilder::new()
-            .number(phonenumber::parse(None, case).unwrap())
+            .number(phonenumber::parse(None, "+1234567890").unwrap())
             .build();
 
         let result = tokio_test::block_on(client.evaluate_service(&evaluate_service));
