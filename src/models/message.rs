@@ -812,3 +812,9 @@ impl GetMessagesParamsBuilder {
         }
     }
 }
+
+impl Default for GetMessagesParamsBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
