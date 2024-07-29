@@ -1,1 +1,49 @@
-# Cooming Soon
+# Contributing to sendblue
+
+Thank you for considering contributing to sendblue! Here are some guidelines to help you get started.
+
+## How to Contribute
+
+1. **Reporting Issues**: If you find a bug or have a feature request, please open an issue in the [GitHub Issue Tracker](https://github.com/NewtTheWolf/sendblue-rs/issues).
+
+2. **Fork and Clone**: Fork the repository and clone it to your local machine:
+
+   ```sh
+   git clone https://github.com/your-username/sendblue-rs.git
+   ```
+
+3. **Create a Branch**: Create a new branch for your work, using the following naming conventions:
+
+   ```sh
+   git checkout -b feat/your-feature-name   # For new features
+   git checkout -b fix/your-fix-name        # For bug fixes
+   git checkout -b chore/your-chore-name    # For maintenance and chores
+   ```
+
+4. **Make Changes**: Make your changes in your branch.
+
+5. **Commit Changes**: Commit your changes with a descriptive commit message following these conventions:
+
+   ```sh
+   git commit -m "feat: description of the feature"
+   git commit -m "fix: description of the fix"
+   git commit -m "chore: description of the chore"
+   ```
+
+6. **Push Changes**: Push your changes to your fork:
+
+   ```sh
+   git push origin feat/your-feature-name
+   ```
+
+7. **Submit a Pull Request**: Open a pull request to the main repository.
+
+## Versioning
+
+We use [Semantic Versioning](https://semver.org/) (semver) for versioning. Ensure that your changes adhere to these versioning rules.
+
+## License
+
+By contributing to this project, you agree that your contributions will be licensed under both the MIT License and the Apache License, Version 2.0.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be dual-licensed as described above, without any additional terms or conditions.
