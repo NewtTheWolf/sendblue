@@ -1,7 +1,146 @@
+// Copyright 2024 NewtTheWolf
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 //! Sendblue API Client
 //!
-//! This module provides the client for interacting with the Sendblue API, including methods
+//! This module provides a client for interacting with the Sendblue API, including methods
 //! for sending messages, retrieving messages, and evaluating phone numbers.
+//!
+//! # Overview
+//!
+//! The Sendblue API allows you to send messages, retrieve message histories, and evaluate
+//! phone numbers for their ability to use iMessage. This module encapsulates these functionalities
+//! in a user-friendly Rust client.
+//!
+//! # Features
+//!
+//! - **Send Messages**: Send single or group messages using the Sendblue API.
+//! - **Retrieve Messages**: Fetch message histories with filtering and pagination options.
+//! - **Evaluate Phone Numbers**: Check if a phone number can send/receive iMessages.
+//! - **Typing Indicators**: Send typing indicators to recipients.
+//!
+//! # Installation
+//!
+//! To add `sendblue` to your project, include it as a dependency in your `Cargo.toml`:
+//!
+//! ```toml
+//! [dependencies]
+//! sendblue = "0.1.0"
+//! ```
+//!
+//! Or use the cargo add command:
+//!
+//! ```sh
+//! cargo add sendblue
+//! ```
+//!
+//! # Usage
+//!
+//! To use the Sendblue API client, create an instance of `SendblueClient` with your API key and secret.
+//!
+//! ```
+//! use sendblue::SendblueClient;
+//!
+//! let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+//! ```
+//!
+//! # Examples
+//!
+//! ## Sending a Message
+//!
+//! ```
+//! use sendblue::SendblueClient;
+//! use sendblue::models::MessageBuilder;
+//!
+//! #[tokio::main]
+//! async fn main() {
+//!     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+//!
+//!     let message = MessageBuilder::new(phonenumber::parse(None, "+1234567890").unwrap())
+//!         .content("Hello, world!".into())
+//!         .build()
+//!         .unwrap();
+//!
+//!     match client.send(&message).await {
+//!         Ok(response) => println!("Message sent: {:?}", response),
+//!         Err(e) => eprintln!("Error sending message: {:?}", e),
+//!     }
+//! }
+//! ```
+//!
+//! ## Retrieving Messages
+//!
+//! ```
+//! use sendblue::SendblueClient;
+//! use sendblue::models::GetMessagesParamsBuilder;
+//!
+//! #[tokio::main]
+//! async fn main() {
+//!     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+//!
+//!     let params = GetMessagesParamsBuilder::new()
+//!         .limit(Some(50))
+//!         .offset(Some(0))
+//!         .number(Some(phonenumber::parse(None, "+12345678912").unwrap()))
+//!         .from_date(Some("2023-06-15 12:00:00".into()))
+//!         .build();
+//!
+//!     match client.get_messages(params).await {
+//!         Ok(response) => println!("Messages retrieved: {:?}", response.messages),
+//!         Err(e) => eprintln!("Error retrieving messages: {:?}", e),
+//!     }
+//! }
+//! ```
+//!
+//! ## Evaluating a Phone Number
+//!
+//! ```
+//! use sendblue::SendblueClient;
+//! use sendblue::models::EvaluateServiceBuilder;
+//!
+//! #[tokio::main]
+//! async fn main() {
+//!     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+//!
+//!     let evaluate_service = EvaluateServiceBuilder::new()
+//!         .number(phonenumber::parse(None, "+19999999999").unwrap())
+//!         .build();
+//!
+//!     match client.evaluate_service(&evaluate_service).await {
+//!         Ok(response) => println!("Evaluation result: {:?}", response),
+//!         Err(e) => eprintln!("Error evaluating number: {:?}", e),
+//!     }
+//! }
+//! ```
+//!
+//! ## Sending a Typing Indicator
+//!
+//! ```
+//! use sendblue::SendblueClient;
+//!
+//! #[tokio::main]
+//! async fn main() {
+//!     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+//!
+//!     let number = phonenumber::parse(None, "+1234567890").unwrap();
+//!
+//!     match client.send_typing_indicator(&number).await {
+//!         Ok(response) => println!("Typing indicator sent: {:?}", response),
+//!         Err(e) => eprintln!("Error sending typing indicator: {:?}", e),
+//!     }
+//! }
+//! ```
 
 use phonenumber::PhoneNumber;
 use reqwest::{header::HeaderMap, Client};
