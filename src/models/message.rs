@@ -16,6 +16,8 @@ use chrono::{DateTime, Utc};
 use phonenumber::PhoneNumber;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
+#[cfg(feature = "schemars")]
+use schemars::{schema::Schema, schema_for, JsonSchema};
 
 use super::{ErrorCode, Status};
 
@@ -118,6 +120,22 @@ pub struct MessageResponse {
     pub error_detail: Option<String>,
 }
 
+#[cfg(feature = "schemars")]
+/// Meta type for schema generation for MessageResponse
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct MessageResponseSchema(pub MessageResponse);
+
+#[cfg(feature = "schemars")]
+impl JsonSchema for MessageResponse {
+    fn schema_name() -> String {
+        "MessageResponse".to_string()
+    }
+
+    fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> Schema {
+        schema_for!(MessageResponseSchema).schema.into()
+    }
+}
+
 /// Payload for the status callback
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MessageStatusCallback {
@@ -156,6 +174,22 @@ pub struct MessageStatusCallback {
     pub was_downgraded: Option<bool>,
     /// The plan associated with the message
     pub plan: String,
+}
+
+#[cfg(feature = "schemars")]
+/// Meta type for schema generation for MessageStatusCallback
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct MessageStatusCallbackSchema(pub MessageStatusCallback);
+
+#[cfg(feature = "schemars")]
+impl JsonSchema for MessageStatusCallback {
+    fn schema_name() -> String {
+        "MessageStatusCallback".to_string()
+    }
+
+    fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> Schema {
+        schema_for!(MessageStatusCallbackSchema).schema.into()
+    }
 }
 
 /// Request parameters for getting messages
