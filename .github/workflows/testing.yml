@@ -14,8 +14,5 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rustfmt, clippy
-      - uses: extractions/setup-just@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - run: cargo clippy --all-features --no-deps
       - run: cargo test --all-features

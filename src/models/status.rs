@@ -3,9 +3,12 @@
 //! This module provides the data model for message statuses used in the Sendblue API.
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "schemars")]
+use schemars::JsonSchema;
 
 /// Status of the message in the Sendblue API
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Status {
     Queued,
@@ -18,6 +21,7 @@ pub enum Status {
 
 /// Error codes returned by the Sendblue API
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub enum ErrorCode {
     #[serde(rename = "4000")]
     ValidationError,

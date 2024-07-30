@@ -25,6 +25,7 @@ regex = "1.10"
 url = "2.5.2"
 phonenumber = "0.3.6"
 chrono = { version = "0.4", features = ["serde"] }
+schemars = { version = "0.8.0", features = ["chrono"], optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -36,6 +37,7 @@ httpmock = "0.7.0"
 
 [features]
 default = []
+schemars = ["dep:schemars"]
 
 [profile.release]
 opt-level = 3
