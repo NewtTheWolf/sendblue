@@ -2,7 +2,7 @@
 //!
 //! This module provides the data model for voice notes used in the Sendblue API.
 
-use crate::Url;
+use crate::traits::Url;
 use serde::{Deserialize, Serialize};
 use url::Url as RawUrl;
 use validator::ValidationError;
@@ -13,7 +13,7 @@ use validator::ValidationError;
 ///
 /// ```
 /// use sendblue::models::VoiceNote;
-/// use sendblue::Url;
+/// use sendblue::traits::Url;
 ///
 /// let voice_note = VoiceNote::new("https://example.com/audio.caf").unwrap();
 /// ```

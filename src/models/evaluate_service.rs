@@ -54,6 +54,12 @@ impl EvaluateServiceBuilder {
     }
 }
 
+impl Default for EvaluateServiceBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Response from the Sendblue API for evaluating if a number can send/receive iMessages
 ///
 /// # Examples

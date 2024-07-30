@@ -5,13 +5,15 @@
 use phonenumber::PhoneNumber;
 use serde::{Deserialize, Serialize};
 
+use crate::models::deserialize_phone_number;
+
 /// Status of the typing indicator in the Sendblue API
 ///
 /// # Variants
 ///
 /// * `Sent` - The typing indicator was sent successfully
 /// * `Error` - An error occurred while sending the typing indicator
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum TypingIndicatorStatus {
     Sent,
@@ -27,6 +29,7 @@ pub enum TypingIndicatorStatus {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TypingIndicatorResponse {
     /// The number you evaluated in E.164 format
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub number: PhoneNumber,
     /// The status of the typing indicator you tried to send (this will either be SENT or ERROR)
     pub status: TypingIndicatorStatus,
@@ -53,5 +56,6 @@ pub struct TypingIndicatorResponse {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TypingIndicator {
     /// The phone number to send the typing indicator to
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub number: PhoneNumber,
 }
