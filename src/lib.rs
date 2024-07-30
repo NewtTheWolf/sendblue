@@ -32,14 +32,7 @@
 //!
 //! # Installation
 //!
-//! To add `sendblue` to your project, include it as a dependency in your `Cargo.toml`:
-//!
-//! ```toml
-//! [dependencies]
-//! sendblue = "0.1.0"
-//! ```
-//!
-//! Or use the cargo add command:
+//! Use the cargo add command:
 //!
 //! ```sh
 //! cargo add sendblue

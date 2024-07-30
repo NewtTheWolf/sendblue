@@ -3,6 +3,7 @@
 ![Build Status](https://github.com/NewtTheWolf/sendblue-rs/actions/workflows/release.yml/badge.svg)
 [![License: MIT/Apache-2.0](https://img.shields.io/badge/License-MIT%2FApache--2.0-blue)](https://opensource.org/licenses/MIT)
 [![Downloads](https://img.shields.io/crates/d/sendblue.svg)](https://crates.io/crates/sendblue)
+[![semantic-release: angular](https://img.shields.io/badge/semantic--release-rust-dea584?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
 # sendblue
 
