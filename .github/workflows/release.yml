@@ -17,6 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Validate README.md Encoding
+        run: |
+          if ! iconv -f UTF-8 -t UTF-8 README.md > /dev/null; then
+            echo "README.md is not valid UTF-8" >&2
+            exit 1
+          fi
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v3
         with:
