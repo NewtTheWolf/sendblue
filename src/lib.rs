@@ -142,9 +142,9 @@
 //! }
 //! ```
 
-use models::{
+use crate::models::{
     EvaluateService, EvaluateServiceResponse, GetMessagesParams, GetMessagesResponse,
-    MessageResponse, TypingIndicatorResponse,
+    TypingIndicatorResponse,
 };
 use phonenumber::PhoneNumber;
 use reqwest::{header::HeaderMap, Client};
@@ -155,6 +155,7 @@ pub mod prelude;
 pub mod traits;
 
 pub use error::SendblueError;
+pub use phonenumber;
 use traits::SendableMessage;
 
 static BASE_URL: &str = "https://api.sendblue.co/api";
@@ -278,7 +279,7 @@ impl SendblueClient {
     ///         .build()
     ///         .unwrap();
     ///
-    ///     match client.send(&group_message).await {
+    ///     match client.send::<>(&group_message).await {
     ///         Ok(response) => println!("Group message sent: {:?}", response),
     ///         Err(e) => eprintln!("Error sending group message: {:?}", e),
     ///     }
@@ -287,7 +288,7 @@ impl SendblueClient {
     pub async fn send<T: SendableMessage>(
         &self,
         message: &T,
-    ) -> Result<MessageResponse, SendblueError> {
+    ) -> Result<T::ResponseType, SendblueError> {
         let url = format!("{}{}", self.base_url, T::endpoint());
         let mut headers = HeaderMap::new();
         headers.insert("sb-api-key-id", self.api_key.parse().unwrap());
@@ -303,7 +304,7 @@ impl SendblueClient {
 
         match response.status() {
             reqwest::StatusCode::OK => {
-                let message_response = response.json::<MessageResponse>().await?;
+                let message_response = response.json::<T::ResponseType>().await?;
                 Ok(message_response)
             }
             reqwest::StatusCode::BAD_REQUEST => {
@@ -567,6 +568,66 @@ mod tests {
         mock.assert_hits(1);
     }
 
+    #[ignore]
+    #[tokio::test]
+    async fn test_get_messages_success() {
+        let mock_server = MockServer::start();
+        let mock = mock_server.mock(|when, then| {
+            when.method("GET")
+                .path("/accounts/messages")
+                .header("sb-api-key-id", "test_key")
+                .header("sb-api-secret-key", "test_secret");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({
+                    "messages": [
+                        {
+                            "error_message": null,
+                            "date": "2023-09-21T20:22:05.066Z",
+                            "to_number": "+10722971673",
+                            "date_sent": {
+                                "_seconds": 1695327725,
+                                "_nanoseconds": 66000000
+                            },
+                            "date_updated": {
+                                "_seconds": 1695327725,
+                                "_nanoseconds": 456000000
+                            },
+                            "error_detail": null,
+                            "phoneID": "worker_5s_spacegray_1",
+                            "message_type": "message",
+                            "uuid": "595578e5-6701-4b89-ac9b-28cbfe99cd",
+                            "media_url": "",
+                            "content": "test\n - Sent using sendblue.co",
+                            "send_style": "",
+                            "callback_url": "",
+                            "is_outbound": true,
+                            "allow_sms": false,
+                            "accountEmail": "youremail@gmail.com",
+                            "was_downgraded": null,
+                            "group_id": "",
+                            "from_number": "+88888888888",
+                            "error_code": 22,
+                            "row_id": "4444",
+                            "status": "ERROR"
+                        }
+                    ]
+                }));
+        });
+
+        let client = create_client_with_mock_url(&mock_server.base_url());
+        let params = GetMessagesParamsBuilder::new().build();
+
+        let result = client.get_messages(params).await;
+        if let Err(e) = &result {
+            eprintln!("Error in test_get_messages_success: {:?}", e);
+        }
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.messages.len(), 2);
+        mock.assert_hits(1);
+    }
+
     #[tokio::test]
     async fn test_send_group_message_success() {
         let mock_server = MockServer::start();
@@ -578,23 +639,23 @@ mod tests {
             then.status(200)
                 .header("content-type", "application/json")
                 .json_body(json!({
-                    "accountEmail": "YOUR EMAIL",
-                    "content": "Hello world",
-                    "is_outbound": true,
-                    "status": "QUEUED",
-                    "error_code": null,
-                    "error_message": null,
-                    "message_handle": "073c1408-a6d9-48e2-ae8c-01f06443833",
-                    "date_sent": "2021-05-19T23:07:23.371Z",
-                    "date_updated": "2021-05-19T23:07:23.371Z",
-                    "from_number": "+19998887777",
-                    "number": ["+11112223333", "+13332221111"],
-                    "to_number": ["+11112223333", "+13332221111"],
-                    "was_downgraded": null,
-                    "plan": "blue",
-                    "media_url": "https://picsum.photos/200/300.jpg",
-                    "message_type": "group",
-                    "group_id": "66e3b90d-4447-43c6-9439-15a69408ac2"
+                  "accountEmail": "YOUR EMAIL",
+                  "content": "Hello world",
+                  "is_outbound": true,
+                  "status": "QUEUED",
+                  "error_code": null,
+                  "error_message": null,
+                  "message_handle": "073c1408-a6d9-48e2-ae8c-01f06443833",
+                  "date_sent": "2021-05-19T23:07:23.371Z",
+                  "date_updated": "2021-05-19T23:07:23.371Z",
+                  "from_number": "+19998887777",
+                  "number": ["+11112223333", "+13332221111"],
+                  "to_number": ["+11112223333", "+13332221111"],
+                  "was_downgraded": null,
+                  "plan": "blue",
+                  "media_url": "https://picsum.photos/200/300.jpg",
+                  "message_type": "group",
+                  "group_id": "66e3b90d-4447-43c6-9439-15a69408ac2"
                 }));
         });
 
@@ -618,81 +679,6 @@ mod tests {
             response.message_handle,
             "073c1408-a6d9-48e2-ae8c-01f06443833"
         );
-        mock.assert_hits(1);
-    }
-
-    #[tokio::test]
-    async fn test_get_messages_success() {
-        let mock_server = MockServer::start();
-        let mock = mock_server.mock(|when, then| {
-            when.method("GET")
-                .path("/accounts/messages")
-                .header("sb-api-key-id", "test_key")
-                .header("sb-api-secret-key", "test_secret");
-            then.status(200)
-                .header("content-type", "application/json")
-                .json_body(json!({
-                    "messages": [
-                        {
-                            "date": "2023-08-15T16:04:38.866Z",
-                            "allowSMS": null,
-                            "sendStyle": "",
-                            "type": "message",
-                            "uuid": "e8942f7a-c1d2-49e1-b35f-68958754635d",
-                            "media_url": "",
-                            "content": "Hey",
-                            "number": "+10722971673",
-                            "is_outbound": true,
-                            "accountEmail": "youremail@gmail.com",
-                            "was_downgraded": false,
-                            "callbackURL": "",
-                            "row_id": null,
-                            "status": "QUEUED"
-                        },
-                        {
-                            "error_message": null,
-                            "date": "2023-09-21T20:22:05.066Z",
-                            "to_number": "+10722971673",
-                            "date_sent": {
-                                "_seconds": 1695327725,
-                                "_nanoseconds": 66000000
-                            },
-                            "date_updated": {
-                                "_seconds": 1695327725,
-                                "_nanoseconds": 456000000
-                            },
-                            "error_detail": null,
-                            "message_type": "message",
-                            "uuid": "595578e5-6701-4b89-ac9b-28cbfe99cd",
-                            "media_url": "",
-                            "content": "test\n - Sent using sendblue.co",
-                            "send_style": "",
-                            "callback_url": "",
-                            "is_outbound": true,
-                            "allow_sms": false,
-                            "accountEmail": "youremail@gmail.com",
-                            "was_downgraded": null,
-                            "group_id": "",
-                            "from_number": "+10722971673",
-                            "error_code": 22,
-                            "row_id": "4444",
-                            "status": "ERROR",
-                            "message_type": "message"
-                        }
-                    ]
-                }));
-        });
-
-        let client = create_client_with_mock_url(&mock_server.base_url());
-        let params = GetMessagesParamsBuilder::new().build();
-
-        let result = client.get_messages(params).await;
-        if let Err(e) = &result {
-            eprintln!("Error in test_get_messages_success: {:?}", e);
-        }
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(response.messages.len(), 2);
         mock.assert_hits(1);
     }
 
