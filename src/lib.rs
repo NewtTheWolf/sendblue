@@ -38,11 +38,17 @@
 //! cargo add sendblue
 //! ```
 //!
+//! If you need JSON schema support, enable the `schemars` feature:
+//!
+//! ```sh
+//! cargo add sendblue --features schemars
+//! ```
+//!
 //! # Usage
 //!
 //! To use the Sendblue API client, create an instance of `SendblueClient` with your API key and secret.
 //!
-//! ```
+//! ```rust
 //! use sendblue::SendblueClient;
 //!
 //! let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
@@ -52,7 +58,7 @@
 //!
 //! ## Sending a Message
 //!
-//! ```
+//! ```rust
 //! use sendblue::SendblueClient;
 //! use sendblue::models::MessageBuilder;
 //!
@@ -74,7 +80,7 @@
 //!
 //! ## Retrieving Messages
 //!
-//! ```
+//! ```rust
 //! use sendblue::SendblueClient;
 //! use sendblue::models::GetMessagesParamsBuilder;
 //!
@@ -98,7 +104,7 @@
 //!
 //! ## Evaluating a Phone Number
 //!
-//! ```
+//! ```rust
 //! use sendblue::SendblueClient;
 //! use sendblue::models::EvaluateServiceBuilder;
 //!
@@ -119,7 +125,7 @@
 //!
 //! ## Sending a Typing Indicator
 //!
-//! ```
+//! ```rust
 //! use sendblue::SendblueClient;
 //!
 //! #[tokio::main]
@@ -591,7 +597,7 @@ mod tests {
                             "message_type": "message",
                             "uuid": "595578e5-6701-4b89-ac9b-28cbfe99cd",
                             "media_url": "",
-                            "content": "test\n - Sent using sendblue.co",
+                            "content": "testn - Sent using sendblue.co",
                             "send_style": "",
                             "callback_url": "",
                             "is_outbound": true,
