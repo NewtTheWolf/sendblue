@@ -4,6 +4,7 @@
 
 use crate::traits::Url;
 use serde::{Deserialize, Serialize};
+use std::{fmt, ops::Deref, str::FromStr};
 use url::Url as RawUrl;
 use validator::ValidationError;
 
@@ -35,6 +36,21 @@ impl Url for MediaUrl {
     }
 }
 
+impl fmt::Display for MediaUrl {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl FromStr for MediaUrl {
+    type Err = ValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let raw_url = RawUrl::parse(s).map_err(|_| ValidationError::new("invalid url format"))?;
+        Ok(Self(raw_url))
+    }
+}
+
 impl Serialize for MediaUrl {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -51,5 +67,13 @@ impl<'de> Deserialize<'de> for MediaUrl {
     {
         let s: &str = Deserialize::deserialize(deserializer)?;
         MediaUrl::new(s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Deref for MediaUrl {
+    type Target = RawUrl;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
