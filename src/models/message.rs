@@ -7,17 +7,18 @@ use crate::{
     models::{
         /* phonenumber::deserialize_phone_number, */ deserialize_option_phone_number,
         deserialize_option_vec_phone_number, deserialize_phone_number,
-        deserialize_vec_phone_number, CallbackUrl, MediaUrl, SendStyle,
+        deserialize_vec_phone_number, serialize_phone_number, CallbackUrl, MediaUrl, SendStyle,
     },
     traits::SendableMessage,
     SendblueError,
 };
 use chrono::{DateTime, Utc};
 use phonenumber::PhoneNumber;
-use serde::{Deserialize, Serialize};
-use validator::Validate;
 #[cfg(feature = "schemars")]
 use schemars::{schema::Schema, schema_for, JsonSchema};
+use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, skip_serializing_none, NoneAsEmptyString};
+use validator::Validate;
 
 use super::{ErrorCode, Status};
 
@@ -36,7 +37,7 @@ use super::{ErrorCode, Status};
 #[derive(Serialize, Deserialize, Validate, Debug)]
 pub struct Message {
     /// The recipient's phone number in E.164 format
-    #[serde(deserialize_with = "deserialize_phone_number")]
+    #[serde(serialize_with = "serialize_phone_number")]
     pub number: PhoneNumber,
     /// The content of the message (optional)
     #[validate(length(min = 1))]
@@ -62,13 +63,85 @@ impl SendableMessage for Message {
 }
 
 /// Response from the Sendblue API after sending a message
+#[serde_as]
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MessageResponse {
     /// The email of the account
     #[serde(rename = "accountEmail")]
     pub account_email: String,
     /// The content of the message
-    pub content: String,
+    pub content: Option<String>,
+    /// Whether the message is outbound
+    pub is_outbound: bool,
+    /// The status of the message
+    pub status: Status,
+    /// The error code if any (optional)
+    pub error_code: Option<ErrorCode>,
+    /// The error message if any (optional)
+    pub error_message: Option<String>,
+    /// The handle of the message
+    pub message_handle: String,
+    /// The date the message was sent
+    pub date_sent: DateTime<Utc>,
+    /// The date the message was updated
+    pub date_updated: DateTime<Utc>,
+    /// The sender's phone number
+    #[serde(deserialize_with = "deserialize_phone_number")]
+    pub from_number: PhoneNumber,
+    /// The recipient's phone number
+    #[serde(deserialize_with = "deserialize_phone_number")]
+    pub number: PhoneNumber,
+    /// The recipient's phone number (alternative)
+    #[serde(deserialize_with = "deserialize_phone_number")]
+    pub to_number: PhoneNumber,
+    /// Whether the message was downgraded
+    pub was_downgraded: Option<bool>,
+    /// The plan associated with the message
+    pub plan: Option<String>,
+    /// The URL of the media
+    #[serde_as(as = "NoneAsEmptyString")]
+    pub media_url: Option<MediaUrl>,
+    /// The type of the message
+    pub message_type: Option<String>,
+    /// The group ID associated with the message
+    pub group_id: Option<String>,
+    /// The participants in the message
+    pub participants: Option<Vec<String>>,
+    /// The send style of the message
+    pub send_style: SendStyle,
+    /// Whether the recipient opted out
+    pub opted_out: bool,
+    /// The error detail if any (optional)
+    pub error_detail: Option<String>,
+}
+
+#[cfg(feature = "schemars")]
+/// Meta type for schema generation for MessageResponse
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct MessageResponseSchema(pub MessageResponse);
+
+#[cfg(feature = "schemars")]
+impl JsonSchema for MessageResponse {
+    fn schema_name() -> String {
+        "MessageResponse".to_string()
+    }
+
+    fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> Schema {
+        schema_for!(MessageResponseSchema).schema.into()
+    }
+}
+
+/// Payload for the status callback
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MessageStatusCallback {
+    /// The email of the account
+    #[serde(rename = "accountEmail")]
+    pub account_email: String,
+    /// The content of the message
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub content: Option<String>,
     /// Whether the message is outbound
     pub is_outbound: bool,
     /// The status of the message
@@ -101,7 +174,8 @@ pub struct MessageResponse {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub plan: Option<String>,
     /// The URL of the media
-    pub media_url: String,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub media_url: Option<MediaUrl>,
     /// The type of the message
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub message_type: Option<String>,
@@ -112,68 +186,13 @@ pub struct MessageResponse {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub participants: Option<Vec<String>>,
     /// The send style of the message
-    pub send_style: SendStyle,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub send_style: Option<String>,
     /// Whether the recipient opted out
     pub opted_out: bool,
     /// The error detail if any (optional)
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub error_detail: Option<String>,
-}
-
-#[cfg(feature = "schemars")]
-/// Meta type for schema generation for MessageResponse
-#[derive(Serialize, Deserialize, JsonSchema)]
-pub struct MessageResponseSchema(pub MessageResponse);
-
-#[cfg(feature = "schemars")]
-impl JsonSchema for MessageResponse {
-    fn schema_name() -> String {
-        "MessageResponse".to_string()
-    }
-
-    fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> Schema {
-        schema_for!(MessageResponseSchema).schema.into()
-    }
-}
-
-/// Payload for the status callback
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct MessageStatusCallback {
-    /// The email of the account
-    #[serde(rename = "accountEmail")]
-    pub account_email: String,
-    /// The content of the message
-    pub content: String,
-    /// Whether the message is outbound
-    pub is_outbound: bool,
-    /// The status of the message
-    pub status: Status,
-    /// The error code if any (optional)
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub error_code: Option<ErrorCode>,
-    /// The error message if any (optional)
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub error_message: Option<String>,
-    /// The handle of the message
-    pub message_handle: String,
-    /// The date the message was sent
-    pub date_sent: DateTime<Utc>,
-    /// The date the message was updated
-    pub date_updated: DateTime<Utc>,
-    /// The sender's phone number
-    #[serde(deserialize_with = "deserialize_phone_number")]
-    pub from_number: PhoneNumber,
-    /// The recipient's phone number
-    #[serde(deserialize_with = "deserialize_phone_number")]
-    pub number: PhoneNumber,
-    /// The recipient's phone number (alternative)
-    #[serde(deserialize_with = "deserialize_phone_number")]
-    pub to_number: PhoneNumber,
-    /// Whether the message was downgraded
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub was_downgraded: Option<bool>,
-    /// The plan associated with the message
-    pub plan: String,
 }
 
 #[cfg(feature = "schemars")]
@@ -333,6 +352,7 @@ impl SendableMessage for GroupMessage {
 }
 
 /// Response from the Sendblue API for sending a group message
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GroupMessageResponse {
     /// The email of the account

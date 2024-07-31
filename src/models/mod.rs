@@ -21,22 +21,21 @@ pub use message::{
     RetrievedMessage,
 };
 pub use phonenumber::PhoneNumber;
+use phonenumber::{parse, Mode};
 pub use send_style::SendStyle;
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serializer};
 pub use status::{ErrorCode, Status};
 pub use typing_indicator::{TypingIndicator, TypingIndicatorResponse, TypingIndicatorStatus};
 pub use voice_note::VoiceNote;
 
-/// Deserialize function for PhoneNumber
 pub fn deserialize_phone_number<'de, D>(deserializer: D) -> Result<PhoneNumber, D::Error>
 where
     D: Deserializer<'de>,
 {
     let s: &str = Deserialize::deserialize(deserializer)?;
-    phonenumber::parse(None, s).map_err(serde::de::Error::custom)
+    parse(None, s).map_err(serde::de::Error::custom)
 }
 
-// Custom deserializer function for Option<PhoneNumber>
 pub fn deserialize_option_phone_number<'de, D>(
     deserializer: D,
 ) -> Result<Option<PhoneNumber>, D::Error>
@@ -45,25 +44,21 @@ where
 {
     let opt: Option<&str> = Option::deserialize(deserializer)?;
     match opt {
-        Some(s) => phonenumber::parse(None, s)
-            .map(Some)
-            .map_err(serde::de::Error::custom),
+        Some(s) => parse(None, s).map(Some).map_err(serde::de::Error::custom),
         None => Ok(None),
     }
 }
 
-/// Custom deserializer function for Vec<PhoneNumber>
 pub fn deserialize_vec_phone_number<'de, D>(deserializer: D) -> Result<Vec<PhoneNumber>, D::Error>
 where
     D: Deserializer<'de>,
 {
     let vec: Vec<&str> = Deserialize::deserialize(deserializer)?;
     vec.into_iter()
-        .map(|s| phonenumber::parse(None, s).map_err(serde::de::Error::custom))
+        .map(|s| parse(None, s).map_err(serde::de::Error::custom))
         .collect()
 }
 
-/// Custom deserializer function for Option<Vec<PhoneNumber>>
 pub fn deserialize_option_vec_phone_number<'de, D>(
     deserializer: D,
 ) -> Result<Option<Vec<PhoneNumber>>, D::Error>
@@ -75,7 +70,7 @@ where
         Some(vec) => {
             let mut phone_numbers = Vec::new();
             for s in vec {
-                match phonenumber::parse(None, s) {
+                match parse(None, s) {
                     Ok(phone_number) => phone_numbers.push(phone_number),
                     Err(err) => return Err(serde::de::Error::custom(err)),
                 }
@@ -84,4 +79,12 @@ where
         }
         None => Ok(None),
     }
+}
+
+pub fn serialize_phone_number<S>(number: &PhoneNumber, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let e164 = number.format().mode(Mode::E164).to_string();
+    serializer.serialize_str(&e164)
 }
