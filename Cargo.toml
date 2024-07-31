@@ -26,6 +26,8 @@ url = "2.5.2"
 phonenumber = "0.3.6"
 chrono = { version = "0.4", features = ["serde"] }
 schemars = { version = "0.8.0", features = ["chrono"], optional = true }
+serde_with = { version = "3.9.0", features = ["schemars_0_8"] }
+tracing = "0.1.40"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }

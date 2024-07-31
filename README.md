@@ -65,7 +65,7 @@ async fn main() {
 
     match client.send(&message).await {
         Ok(response) => println!("Message sent: {:?}", response),
-        Err(e) => eprintln!("Error sending message: {:?}", e),
+        Err(e) => error!("Error sending message: {:?}", e),
     }
 }
 ```
@@ -89,7 +89,7 @@ async fn main() {
 
     match client.get_messages(params).await {
         Ok(response) => println!("Messages retrieved: {:?}", response.messages),
-        Err(e) => eprintln!("Error retrieving messages: {:?}", e),
+        Err(e) => error!("Error retrieving messages: {:?}", e),
     }
 }
 ```
@@ -110,7 +110,7 @@ async fn main() {
 
     match client.evaluate_service(&evaluate_service).await {
         Ok(response) => println!("Evaluation result: {:?}", response),
-        Err(e) => eprintln!("Error evaluating number: {:?}", e),
+        Err(e) => error!("Error evaluating number: {:?}", e),
     }
 }
 ```
@@ -128,7 +128,7 @@ async fn main() {
 
     match client.send_typing_indicator(&number).await {
         Ok(response) => println!("Typing indicator sent: {:?}", response),
-        Err(e) => eprintln!("Error sending typing indicator: {:?}", e),
+        Err(e) => error!("Error sending typing indicator: {:?}", e),
     }
 }
 ```

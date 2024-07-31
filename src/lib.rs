@@ -73,7 +73,7 @@
 //!
 //!     match client.send(&message).await {
 //!         Ok(response) => println!("Message sent: {:?}", response),
-//!         Err(e) => eprintln!("Error sending message: {:?}", e),
+//!         Err(e) => error!("Error sending message: {:?}", e),
 //!     }
 //! }
 //! ```
@@ -97,7 +97,7 @@
 //!
 //!     match client.get_messages(params).await {
 //!         Ok(response) => println!("Messages retrieved: {:?}", response.messages),
-//!         Err(e) => eprintln!("Error retrieving messages: {:?}", e),
+//!         Err(e) => error!("Error retrieving messages: {:?}", e),
 //!     }
 //! }
 //! ```
@@ -118,7 +118,7 @@
 //!
 //!     match client.evaluate_service(&evaluate_service).await {
 //!         Ok(response) => println!("Evaluation result: {:?}", response),
-//!         Err(e) => eprintln!("Error evaluating number: {:?}", e),
+//!         Err(e) => error!("Error evaluating number: {:?}", e),
 //!     }
 //! }
 //! ```
@@ -136,7 +136,7 @@
 //!
 //!     match client.send_typing_indicator(&number).await {
 //!         Ok(response) => println!("Typing indicator sent: {:?}", response),
-//!         Err(e) => eprintln!("Error sending typing indicator: {:?}", e),
+//!         Err(e) => error!("Error sending typing indicator: {:?}", e),
 //!     }
 //! }
 //! ```
@@ -147,13 +147,15 @@ use crate::models::{
 };
 use phonenumber::PhoneNumber;
 use reqwest::{header::HeaderMap, Client};
+use std::fmt::Debug;
+use tracing::error;
 
-pub mod error;
+pub mod errors;
 pub mod models;
 pub mod prelude;
 pub mod traits;
 
-pub use error::SendblueError;
+pub use errors::SendblueError;
 pub use phonenumber;
 use traits::SendableMessage;
 
@@ -257,7 +259,7 @@ impl SendblueClient {
     ///
     ///     match client.send(&message).await {
     ///         Ok(response) => println!("Message sent: {:?}", response),
-    ///         Err(e) => eprintln!("Error sending message: {:?}", e),
+    ///         Err(e) => error!("Error sending message: {:?}", e),
     ///     }
     /// }
     /// ```
@@ -307,9 +309,17 @@ impl SendblueClient {
                 Ok(message_response)
             }
             reqwest::StatusCode::BAD_REQUEST => {
-                Err(SendblueError::BadRequest(response.text().await?))
+                error!("Bad request: {}", response_text);
+                Err(SendblueError::BadRequest(response_text))
             }
-            _ => Err(SendblueError::Unknown(response.text().await?)),
+            _ => {
+                error!(
+                    "Unhandled Status: {}\nResponse body: {}",
+                    status, response_text
+                );
+                error!("Please open an issue on https://github.com/NewtTheWolf/sendblue-rs/issues");
+                Err(SendblueError::Unknown(response_text))
+            }
         }
     }
 
@@ -344,7 +354,7 @@ impl SendblueClient {
     ///
     ///     match client.get_messages(params).await {
     ///         Ok(response) => println!("Messages retrieved: {:?}", response.messages),
-    ///         Err(e) => eprintln!("Error retrieving messages: {:?}", e),
+    ///         Err(e) => error!("Error retrieving messages: {:?}", e),
     ///     }
     /// }
     /// ```
@@ -404,7 +414,7 @@ impl SendblueClient {
     ///
     ///     match client.evaluate_service(&evaluate_service).await {
     ///         Ok(response) => println!("Evaluation result: {:?}", response),
-    ///         Err(e) => eprintln!("Error evaluating number: {:?}", e),
+    ///         Err(e) => error!("Error evaluating number: {:?}", e),
     ///     }
     /// }
     /// ```
@@ -461,7 +471,7 @@ impl SendblueClient {
     ///
     ///     match client.send_typing_indicator(&number).await {
     ///         Ok(response) => println!("Typing indicator sent: {:?}", response),
-    ///         Err(e) => eprintln!("Error sending typing indicator: {:?}", e),
+    ///         Err(e) => error!("Error sending typing indicator: {:?}", e),
     ///     }
     /// }
     /// ```
@@ -555,7 +565,7 @@ mod tests {
 
         let result = client.send(&message).await;
         if let Err(e) = &result {
-            eprintln!("Error in test_send_message_success: {:?}", e);
+            error!("Error in test_send_message_success: {:?}", e);
         }
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -619,7 +629,7 @@ mod tests {
 
         let result = client.get_messages(params).await;
         if let Err(e) = &result {
-            eprintln!("Error in test_get_messages_success: {:?}", e);
+            error!("Error in test_get_messages_success: {:?}", e);
         }
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -669,7 +679,7 @@ mod tests {
 
         let result = client.send(&group_message).await;
         if let Err(e) = &result {
-            eprintln!("Error in test_send_group_message_success: {:?}", e);
+            error!("Error in test_send_group_message_success: {:?}", e);
         }
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -703,7 +713,7 @@ mod tests {
 
         let result = client.evaluate_service(&evaluate_service).await;
         if let Err(e) = &result {
-            eprintln!("Error in test_evaluate_service_success: {:?}", e);
+            error!("Error in test_evaluate_service_success: {:?}", e);
         }
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -733,7 +743,7 @@ mod tests {
 
         let result = client.send_typing_indicator(&phone_number).await;
         if let Err(e) = &result {
-            eprintln!("Error in test_send_typing_indicator_success: {:?}", e);
+            error!("Error in test_send_typing_indicator_success: {:?}", e);
         }
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -762,7 +772,7 @@ mod tests {
 
         let result = client.send_typing_indicator(&phone_number).await;
         if let Err(e) = &result {
-            eprintln!("Error in test_send_typing_indicator_failure: {:?}", e);
+            error!("Error in test_send_typing_indicator_failure: {:?}", e);
         }
         assert!(result.is_err());
         let response = result.unwrap_err();
@@ -802,7 +812,7 @@ mod tests {
 
         let result = client.send(&message).await;
         if let Err(e) = &result {
-            eprintln!("Error in test_send_message_failure: {:?}", e);
+            error!("Error in test_send_message_failure: {:?}", e);
         }
         assert!(result.is_err());
         mock.assert_hits(1);
