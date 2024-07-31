@@ -2,9 +2,9 @@
 //!
 //! This module provides the data model for message statuses used in the Sendblue API.
 
-use serde::{Deserialize, Serialize};
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 /// Status of the message in the Sendblue API
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
