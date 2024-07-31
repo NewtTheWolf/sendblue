@@ -282,14 +282,15 @@ impl SendblueClient {
     ///
     ///     match client.send::<>(&group_message).await {
     ///         Ok(response) => println!("Group message sent: {:?}", response),
-    ///         Err(e) => eprintln!("Error sending group message: {:?}", e),
+    ///         Err(e) => error!("Error sending group message: {:?}", e),
     ///     }
     /// }
     /// ```
-    pub async fn send<T: SendableMessage>(
-        &self,
-        message: &T,
-    ) -> Result<T::ResponseType, SendblueError> {
+    pub async fn send<T>(&self, message: &T) -> Result<T::ResponseType, SendblueError>
+    where
+        T: SendableMessage + Debug,
+        T::ResponseType: Debug,
+    {
         let url = format!("{}{}", self.base_url, T::endpoint());
         let mut headers = HeaderMap::new();
         headers.insert("sb-api-key-id", self.api_key.parse().unwrap());
@@ -303,10 +304,24 @@ impl SendblueClient {
             .send()
             .await?;
 
-        match response.status() {
-            reqwest::StatusCode::OK => {
-                let message_response = response.json::<T::ResponseType>().await?;
-                Ok(message_response)
+        let status = response.status();
+        let response_text = response.text().await.unwrap_or_default();
+
+        match status {
+            reqwest::StatusCode::ACCEPTED => {
+                match serde_json::from_str::<T::ResponseType>(&response_text) {
+                    Ok(message_response) => {
+                        Ok(message_response)
+                    }
+                    Err(e) => {
+                        error!("Error decoding response: {}", e);
+                        error!("Response body: {}", response_text);
+                        Err(SendblueError::Unknown(format!(
+                            "Failed to decode response: {}",
+                            e
+                        )))
+                    }
+                }
             }
             reqwest::StatusCode::BAD_REQUEST => {
                 error!("Bad request: {}", response_text);
