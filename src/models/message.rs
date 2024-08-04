@@ -18,7 +18,7 @@ use chrono::{DateTime, Utc};
 #[cfg(feature = "schemars")]
 use schemars::{schema::Schema, schema_for, JsonSchema};
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, skip_serializing_none, NoneAsEmptyString};
+use serde_with::{serde_as, skip_serializing_none};
 use validator::Validate;
 
 /// Message to be sent using the Sendblue API

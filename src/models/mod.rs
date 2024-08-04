@@ -23,7 +23,6 @@ pub use message::{
 };
 pub use phonenumber::PhoneNumber;
 pub use send_style::SendStyle;
-use serde::{Deserialize, Deserializer, Serializer};
 pub use status::{ErrorCode, Status};
 pub use typing_indicator::{TypingIndicator, TypingIndicatorResponse, TypingIndicatorStatus};
 pub use voice_note::VoiceNote;

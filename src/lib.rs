@@ -145,7 +145,6 @@ use crate::models::{
     EvaluateService, EvaluateServiceResponse, GetMessagesParams, GetMessagesResponse,
     TypingIndicatorResponse,
 };
-use phonenumber::PhoneNumber;
 use reqwest::{header::HeaderMap, Client};
 use std::fmt::Debug;
 use tracing::error;
