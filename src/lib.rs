@@ -46,12 +46,12 @@
 //!
 //! # Usage
 //!
-//! To use the Sendblue API client, create an instance of `SendblueClient` with your API key and secret.
+//! To use the Sendblue API client, create an instance of `Client` with your API key and secret.
 //!
 //! ```rust
-//! use sendblue::SendblueClient;
+//! use sendblue::Client;
 //!
-//! let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+//! let client = Client::new("your_api_key".into(), "your_api_secret".into());
 //! ```
 //!
 //! # Examples
@@ -59,12 +59,12 @@
 //! ## Sending a Message
 //!
 //! ```rust
-//! use sendblue::SendblueClient;
+//! use sendblue::Client;
 //! use sendblue::models::MessageBuilder;
 //!
 //! #[tokio::main]
 //! async fn main() {
-//!     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+//!     let client = Client::new("your_api_key".into(), "your_api_secret".into());
 //!
 //!     let message = MessageBuilder::new(phonenumber::parse(None, "+10722971673").unwrap())
 //!         .content("Hello, world!".into())
@@ -81,12 +81,12 @@
 //! ## Retrieving Messages
 //!
 //! ```rust
-//! use sendblue::SendblueClient;
+//! use sendblue::Client;
 //! use sendblue::models::GetMessagesParamsBuilder;
 //!
 //! #[tokio::main]
 //! async fn main() {
-//!     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+//!     let client = Client::new("your_api_key".into(), "your_api_secret".into());
 //!
 //!     let params = GetMessagesParamsBuilder::new()
 //!         .limit(Some(50))
@@ -105,12 +105,12 @@
 //! ## Evaluating a Phone Number
 //!
 //! ```rust
-//! use sendblue::SendblueClient;
+//! use sendblue::Client;
 //! use sendblue::models::EvaluateServiceBuilder;
 //!
 //! #[tokio::main]
 //! async fn main() {
-//!     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+//!     let client = Client::new("your_api_key".into(), "your_api_secret".into());
 //!
 //!     let evaluate_service = EvaluateServiceBuilder::new()
 //!         .number(phonenumber::parse(None, "+10722971673").unwrap())
@@ -126,11 +126,11 @@
 //! ## Sending a Typing Indicator
 //!
 //! ```rust
-//! use sendblue::SendblueClient;
+//! use sendblue::Client;
 //!
 //! #[tokio::main]
 //! async fn main() {
-//!     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+//!     let client = Client::new("your_api_key".into(), "your_api_secret".into());
 //!
 //!     let number = phonenumber::parse(None, "+10722971673").unwrap();
 //!
@@ -141,44 +141,44 @@
 //! }
 //! ```
 
-use crate::models::{
+use crate::model::{
     EvaluateService, EvaluateServiceResponse, GetMessagesParams, GetMessagesResponse,
     TypingIndicatorResponse,
 };
-use reqwest::{header::HeaderMap, Client};
+use reqwest::{header::HeaderMap, Client as ReqwestClient};
 use std::fmt::Debug;
 use tracing::error;
 
 pub mod errors;
-pub mod models;
+pub mod model;
 pub mod prelude;
-pub mod traits;
+pub mod r#trait;
 
 pub use errors::SendblueError;
 pub use phonenumber;
-use traits::SendableMessage;
+use r#trait::SendableMessage;
 
 static BASE_URL: &str = "https://api.sendblue.co/api";
 
 /// Client for the Sendblue API
 ///
-/// The `SendblueClient` struct provides methods for interacting with the Sendblue API.
+/// The `Client` struct provides methods for interacting with the Sendblue API.
 ///
 /// # Examples
 ///
 /// ```
-/// use sendblue::SendblueClient;
+/// use sendblue::Client;
 ///
-/// let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+/// let client = Client::new("your_api_key".into(), "your_api_secret".into());
 /// ```
-pub struct SendblueClient {
+pub struct Client {
     pub api_key: String,
     pub api_secret: String,
-    pub client: Client,
+    pub client: ReqwestClient,
     base_url: String,
 }
 
-impl SendblueClient {
+impl Client {
     /// Creates a new Sendblue client with the default reqwest client
     ///
     /// # Arguments
@@ -188,20 +188,20 @@ impl SendblueClient {
     ///
     /// # Returns
     ///
-    /// * `SendblueClient` - A new Sendblue client instance
+    /// * `Client` - A new Sendblue client instance
     ///
     /// # Examples
     ///
     /// ```
-    /// use sendblue::SendblueClient;
+    /// use sendblue::Client;
     ///
-    /// let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+    /// let client = Client::new("your_api_key".into(), "your_api_secret".into());
     /// ```
     pub fn new(api_key: String, api_secret: String) -> Self {
-        SendblueClient {
+        Client {
             api_key,
             api_secret,
-            client: Client::new(),
+            client: ReqwestClient::new(),
             base_url: BASE_URL.into(),
         }
     }
@@ -216,14 +216,14 @@ impl SendblueClient {
     ///
     /// # Returns
     ///
-    /// * `SendblueClient` - A new Sendblue client instance
+    /// * `Client` - A new Sendblue client instance
     ///
     /// This is a private function and not intended for public use.
     pub fn new_with_url(api_key: String, api_secret: String, base_url: String) -> Self {
-        SendblueClient {
+        Client {
             api_key,
             api_secret,
-            client: Client::new(),
+            client: ReqwestClient::new(),
             base_url,
         }
     }
@@ -244,12 +244,12 @@ impl SendblueClient {
     /// Sending a normal message:
     ///
     /// ```
-    /// use sendblue::SendblueClient;
+    /// use sendblue::Client;
     /// use sendblue::models::MessageBuilder;
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+    ///     let client = Client::new("your_api_key".into(), "your_api_secret".into());
     ///
     ///     let message = MessageBuilder::new(phonenumber::parse(None, "+10722971673").unwrap())
     ///         .content("Hello, world!".into())
@@ -266,12 +266,12 @@ impl SendblueClient {
     /// Sending a group message:
     ///
     /// ```
-    /// use sendblue::SendblueClient;
+    /// use sendblue::Client;
     /// use sendblue::models::{MessageBuilder, GroupMessage};
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+    ///     let client = Client::new("your_api_key".into(), "your_api_secret".into());
     ///
     ///     let group_message = MessageBuilder::<GroupMessage>::new_group()
     ///         .numbers(vec![phonenumber::parse(None, "+10722971673").unwrap(), phonenumber::parse(None, "+10722971673").unwrap()])
@@ -349,12 +349,12 @@ impl SendblueClient {
     /// # Examples
     ///
     /// ```
-    /// use sendblue::SendblueClient;
+    /// use sendblue::Client;
     /// use sendblue::models::{GetMessagesParamsBuilder};
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+    ///     let client = Client::new("your_api_key".into(), "your_api_secret".into());
     ///
     ///     let params = GetMessagesParamsBuilder::new()
     ///         .limit(Some(50))
@@ -413,12 +413,12 @@ impl SendblueClient {
     /// # Examples
     ///
     /// ```
-    /// use sendblue::SendblueClient;
+    /// use sendblue::Client;
     /// use sendblue::models::{EvaluateServiceBuilder};
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+    ///     let client = Client::new("your_api_key".into(), "your_api_secret".into());
     ///
     /// let evaluate_service = EvaluateServiceBuilder::new()
     ///     .number(phonenumber::parse(None, "+10722971673").unwrap())
@@ -473,11 +473,11 @@ impl SendblueClient {
     /// # Examples
     ///
     /// ```
-    /// use sendblue::SendblueClient;
+    /// use sendblue::Client;
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = SendblueClient::new("your_api_key".into(), "your_api_secret".into());
+    ///     let client = Client::new("your_api_key".into(), "your_api_secret".into());
     ///
     ///     let number = phonenumber::parse(None, "+10722971673").unwrap();
     ///
@@ -529,8 +529,8 @@ mod tests {
     use phonenumber::parse;
     use serde_json::json;
 
-    fn create_client_with_mock_url(base_url: &str) -> SendblueClient {
-        SendblueClient::new_with_url("test_key".into(), "test_secret".into(), base_url.into())
+    fn create_client_with_mock_url(base_url: &str) -> Client {
+        Client::new_with_url("test_key".into(), "test_secret".into(), base_url.into())
     }
 
     #[tokio::test]

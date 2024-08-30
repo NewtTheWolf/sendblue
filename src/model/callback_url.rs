@@ -1,35 +1,29 @@
-//! Voice Note Model
+//! Callback URL Model
 //!
-//! This module provides the data model for voice notes used in the Sendblue API.
+//! This module provides the data model for callback URLs used in the Sendblue API.
 
-use crate::traits::Url;
+use crate::r#trait::Url;
 use serde::{Deserialize, Serialize};
 use url::Url as RawUrl;
 use validator::ValidationError;
 
-/// A URL specifically for audio messages, must end with `.caf`
+/// A URL for status callback, must be a valid URL
 ///
 /// # Examples
 ///
 /// ```
-/// use sendblue::models::VoiceNote;
-/// use sendblue::traits::Url;
+/// use sendblue::models::CallbackUrl;
+/// use sendblue::r#trait::Url;
 ///
-/// let voice_note = VoiceNote::new("https://example.com/audio.caf").unwrap();
+/// let callback_url = CallbackUrl::new("https://example.com/callback").unwrap();
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct VoiceNote(RawUrl);
+pub struct CallbackUrl(RawUrl);
 
-impl Url for VoiceNote {
+impl Url for CallbackUrl {
     fn new(url: &str) -> Result<Self, ValidationError> {
         let url = RawUrl::parse(url).map_err(|_| ValidationError::new("invalid url format"))?;
-        if url.path().ends_with(".caf") {
-            Ok(Self(url))
-        } else {
-            Err(ValidationError::new(
-                "invalid voice note url format, must end with .caf",
-            ))
-        }
+        Ok(Self(url))
     }
 
     fn from_raw_url(raw_url: RawUrl) -> Self {
@@ -41,7 +35,7 @@ impl Url for VoiceNote {
     }
 }
 
-impl Serialize for VoiceNote {
+impl Serialize for CallbackUrl {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -50,12 +44,12 @@ impl Serialize for VoiceNote {
     }
 }
 
-impl<'de> Deserialize<'de> for VoiceNote {
+impl<'de> Deserialize<'de> for CallbackUrl {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         let s: &str = Deserialize::deserialize(deserializer)?;
-        VoiceNote::new(s).map_err(serde::de::Error::custom)
+        CallbackUrl::new(s).map_err(serde::de::Error::custom)
     }
 }

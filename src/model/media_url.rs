@@ -2,7 +2,7 @@
 //!
 //! This module provides the data model for media URLs used in the Sendblue API.
 
-use crate::traits::Url;
+use crate::r#trait::Url;
 use schemars::{
     schema::{InstanceType, Schema, SchemaObject},
     JsonSchema,
@@ -18,7 +18,7 @@ use validator::ValidationError;
 ///
 /// ```
 /// use sendblue::models::MediaUrl;
-/// use sendblue::traits::Url;
+/// use sendblue::r#trait::Url;
 ///
 /// let media_url = MediaUrl::new("https://example.com/media.jpg").unwrap();
 /// ```

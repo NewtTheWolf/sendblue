@@ -5,13 +5,13 @@
 
 use super::{ErrorCode, Status};
 use crate::{
-    models::{
+    model::{
         /* phonenumber::deserialize_phone_number, */ /* phonenumber::{deserialize_option_phone_number,
         deserialize_option_vec_phone_number, deserialize_phone_number,
         deserialize_vec_phone_number, serialize_phone_number}, */
         CallbackUrl, MediaUrl, SendStyle,
     },
-    traits::SendableMessage,
+    r#trait::SendableMessage,
     SendblueError,
 };
 use chrono::{DateTime, Utc};
@@ -310,7 +310,7 @@ pub struct GetMessagesResponse {
 /// use sendblue::models::GroupMessage;
 /// use sendblue::models::MediaUrl;
 /// use sendblue::models::CallbackUrl;
-/// use sendblue::traits::Url;
+/// use sendblue::r#trait::Url;
 ///
 /// let request = GroupMessage {
 ///     numbers: Some(vec![phonenumber::parse(None, "+19998887777").unwrap(), phonenumber::parse(None, "+17778889999").unwrap()]),
@@ -460,7 +460,7 @@ impl MessageBuilder<Message> {
     ///
     /// ```
     /// use sendblue::models::{MessageBuilder, MediaUrl};
-    /// use sendblue::traits::Url;
+    /// use sendblue::r#trait::Url;
     ///
     /// let builder = MessageBuilder::new(phonenumber::parse(None, "+1234567890").unwrap())
     ///     .media_url(MediaUrl::new("https://example.com/media.jpg").unwrap());
@@ -482,7 +482,7 @@ impl MessageBuilder<Message> {
     ///
     /// ```
     /// use sendblue::models::{MessageBuilder, CallbackUrl};
-    /// use sendblue::traits::Url;
+    /// use sendblue::r#trait::Url;
     ///
     /// let builder = MessageBuilder::new(phonenumber::parse(None, "+1234567890").unwrap())
     ///     .status_callback(CallbackUrl::new("https://example.com/message-status/1234abcd").unwrap());
@@ -642,7 +642,7 @@ impl MessageBuilder<GroupMessage> {
     ///
     /// ```
     /// use sendblue::models::{MessageBuilder, MediaUrl};
-    /// use sendblue::traits::Url;
+    /// use sendblue::r#trait::Url;
     ///
     /// let builder = MessageBuilder::new_group()
     ///     .media_url(MediaUrl::new("https://example.com/media.jpg").unwrap());
@@ -664,7 +664,7 @@ impl MessageBuilder<GroupMessage> {
     ///
     /// ```
     /// use sendblue::models::{MessageBuilder, CallbackUrl};
-    /// use sendblue::traits::Url;
+    /// use sendblue::r#trait::Url;
     ///
     /// let builder = MessageBuilder::new_group()
     ///     .status_callback(CallbackUrl::new("https://example.com/message-status/1234abcd").unwrap());
