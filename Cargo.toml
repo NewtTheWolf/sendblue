@@ -14,7 +14,7 @@ keywords = ["iMessage", "SMS", "SendBlue", "API-Client", "Wrapper"]
 categories = ["api-bindings", "asynchronous", "network-programming", "web-programming", "development-tools"]
 
 [dependencies]
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 serde_json = "1.0"
