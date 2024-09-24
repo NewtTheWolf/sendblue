@@ -241,6 +241,10 @@ impl Client {
     ///
     /// * `Client` - A new Sendblue client instance
     ///
+    /// # Expects the following environment variables to be set:
+    /// - `SB_API_KEY` - The API key
+    /// - `SB_API_SECRET` - The API secret
+    ///
     /// # Examples
     ///
     /// ```
