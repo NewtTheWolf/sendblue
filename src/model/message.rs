@@ -15,11 +15,12 @@ use crate::{
     SendblueError,
 };
 use chrono::{DateTime, Utc};
-#[cfg(feature = "schemars")]
-use schemars::{schema::Schema, schema_for, JsonSchema};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use validator::Validate;
+
+#[cfg(feature = "schemars")]
+use schemars::{schema::Schema, schema_for, JsonSchema};
 
 /// Message to be sent using the Sendblue API
 ///
@@ -64,7 +65,8 @@ impl SendableMessage for Message {
 /// Response from the Sendblue API after sending a message
 #[serde_as]
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Debug, Clone, JsonSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub struct MessageResponse {
     /// The email of the account
     #[serde(rename = "accountEmail")]
