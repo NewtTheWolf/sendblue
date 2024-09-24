@@ -5,11 +5,13 @@
 use std::process::Stdio;
 
 use crate::{r#trait::Url, SendblueError};
-use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 use url::Url as RawUrl;
 use validator::ValidationError;
+
+#[cfg(feature = "convert")]
+use bytes::Bytes;
 
 /// A URL specifically for audio messages, must end with `.caf`
 ///
