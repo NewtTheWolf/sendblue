@@ -145,8 +145,12 @@ use crate::model::{
     EvaluateService, EvaluateServiceResponse, GetMessagesParams, GetMessagesResponse,
     TypingIndicatorResponse,
 };
-use reqwest::{header::HeaderMap, Client as ReqwestClient};
-use std::fmt::Debug;
+use model::{GroupMessage, GroupMessageResponse, Message, MessageResponse};
+use reqwest::{
+    header::{HeaderMap, HeaderValue},
+    Client as ReqwestClient,
+};
+use std::{env, fmt::Debug};
 use tracing::error;
 
 pub mod errors;
@@ -159,6 +163,8 @@ pub use phonenumber;
 use r#trait::SendableMessage;
 
 static BASE_URL: &str = "https://api.sendblue.co/api";
+
+static APP_USER_AGENT: &str = env!("CARGO_PKG_NAME");
 
 /// Client for the Sendblue API
 ///
@@ -174,8 +180,8 @@ static BASE_URL: &str = "https://api.sendblue.co/api";
 pub struct Client {
     pub api_key: String,
     pub api_secret: String,
-    pub client: ReqwestClient,
-    base_url: String,
+    pub(crate) client: ReqwestClient,
+    pub(crate) base_url: String,
 }
 
 impl Client {
@@ -198,34 +204,58 @@ impl Client {
     /// let client = Client::new("your_api_key".into(), "your_api_secret".into());
     /// ```
     pub fn new(api_key: String, api_secret: String) -> Self {
+        let mut headers = HeaderMap::new();
+
+        let api_key_value =
+            HeaderValue::from_str(&api_key).unwrap_or_else(|e| panic!("Invalid API key: {}", e));
+        headers.insert("sb-api-key-id", api_key_value);
+
+        let api_secret_value = HeaderValue::from_str(&api_secret)
+            .unwrap_or_else(|e| panic!("Invalid API secret: {}", e));
+        headers.insert("sb-api-secret-key", api_secret_value);
+
+        let client = ReqwestClient::builder()
+            .default_headers(headers)
+            .https_only(true)
+            .user_agent(APP_USER_AGENT)
+            .build()
+            .unwrap_or_else(|e| panic!("Failed to create HTTP client: {}", e));
+
+        println!("App user agent: {}", APP_USER_AGENT);
+
         Client {
             api_key,
             api_secret,
-            client: ReqwestClient::new(),
+            client,
             base_url: BASE_URL.into(),
         }
     }
 
-    /// Creates a new Sendblue client with a custom base URL
+    /// Creates a new Sendblue client using environment variables for the API key and secret.
     ///
-    /// # Arguments
+    /// # Panics
     ///
-    /// * `api_key` - The API key for authentication
-    /// * `api_secret` - The API secret for authentication
-    /// * `base_url` - The base URL for the API
+    /// Panics if the environment variables `SB_API_KEY` or `SB_API_SECRET` are not set.
     ///
     /// # Returns
     ///
     /// * `Client` - A new Sendblue client instance
     ///
-    /// This is a private function and not intended for public use.
-    pub fn new_with_url(api_key: String, api_secret: String, base_url: String) -> Self {
-        Client {
-            api_key,
-            api_secret,
-            client: ReqwestClient::new(),
-            base_url,
-        }
+    /// # Examples
+    ///
+    /// ```
+    /// use sendblue::Client;
+    ///
+    /// let client = Client::from_env();
+    /// ```
+    pub fn from_env() -> Self {
+        let api_key = env::var("SB_API_KEY")
+            .unwrap_or_else(|_| panic!("Environment variable SB_API_KEY is not set"));
+
+        let api_secret = env::var("SB_API_SECRET")
+            .unwrap_or_else(|_| panic!("Environment variable SB_API_SECRET is not set"));
+
+        Self::new(api_key, api_secret)
     }
 
     /// Sends a message using the Sendblue API
@@ -236,7 +266,7 @@ impl Client {
     ///
     /// # Returns
     ///
-    /// * `MessageResponse` - The response from the Sendblue API
+    /// * `MessageResponse` or `GroupMessageResponse` - The response from the Sendblue API
     /// * `SendblueError` - An error that occurred during the request
     ///
     /// # Examples
@@ -291,48 +321,104 @@ impl Client {
         T::ResponseType: Debug,
     {
         let url = format!("{}{}", self.base_url, T::endpoint());
-        let mut headers = HeaderMap::new();
-        headers.insert("sb-api-key-id", self.api_key.parse().unwrap());
-        headers.insert("sb-api-secret-key", self.api_secret.parse().unwrap());
 
-        let response = self
-            .client
-            .post(&url)
-            .headers(headers)
-            .json(message)
-            .send()
-            .await?;
+        let response = self.client.post(&url).json(message).send().await?;
 
-        let status = response.status();
-        let response_text = response.text().await.unwrap_or_default();
+        self.process_response::<T::ResponseType>(response).await
+    }
 
-        match status {
-            reqwest::StatusCode::ACCEPTED => {
-                match serde_json::from_str::<T::ResponseType>(&response_text) {
-                    Ok(message_response) => Ok(message_response),
-                    Err(e) => {
-                        error!("Error decoding response: {}", e);
-                        error!("Response body: {}", response_text);
-                        Err(SendblueError::Unknown(format!(
-                            "Failed to decode response: {}",
-                            e
-                        )))
-                    }
-                }
-            }
-            reqwest::StatusCode::BAD_REQUEST => {
-                error!("Bad request: {}", response_text);
-                Err(SendblueError::BadRequest(response_text))
-            }
-            _ => {
-                error!(
-                    "Unhandled Status: {}\nResponse body: {}",
-                    status, response_text
-                );
-                error!("Please open an issue on https://github.com/NewtTheWolf/sendblue-rs/issues");
-                Err(SendblueError::Unknown(response_text))
-            }
-        }
+    /// Sends a single message using the Sendblue API.
+    ///
+    /// This method is specifically designed for sending a single message.
+    /// It should be used when you want to send a regular, individual message.
+    ///
+    /// # Arguments
+    ///
+    /// * `message` - The message to be sent.
+    ///
+    /// # Returns
+    ///
+    /// * `MessageResponse` - The response from the Sendblue API
+    /// * `SendblueError` - An error that occurred during the request
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use sendblue::Client;
+    /// use sendblue::models::Message;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let client = Client::new("your_api_key".into(), "your_api_secret".into());
+    ///
+    ///     let message = MessageBuilder::new(phonenumber::parse(None, "+10722971673").unwrap())
+    ///         .content("Hello, world!".into())
+    ///         .build()
+    ///         .unwrap();
+    ///
+    ///     match client.send_message(&message).await {
+    ///         Ok(response) => println!("Message sent: {:?}", response),
+    ///         Err(e) => error!("Error sending message: {:?}", e),
+    ///     }
+    /// }
+    /// ```
+    pub async fn send_message(&self, message: &Message) -> Result<MessageResponse, SendblueError> {
+        let url = format!("{}/send-message", self.base_url);
+
+        let response = self.client.post(&url).json(message).send().await?;
+
+        self.process_response::<MessageResponse>(response).await
+    }
+
+    /// Sends a group message using the Sendblue API.
+    ///
+    /// This method is specifically designed for sending group messages.
+    /// It should be used when you want to send a message to multiple recipients simultaneously.
+    ///
+    /// # Arguments
+    ///
+    /// * `message` - The group message to be sent.
+    ///
+    /// # Returns
+    ///
+    /// *  `GroupMessageResponse` - The response from the Sendblue API
+    /// * `SendblueError` - An error that occurred during the request
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use sendblue::Client;
+    /// use sendblue::models::{GroupMessage, MessageBuilder};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let client = Client::new("your_api_key".into(), "your_api_secret".into());
+    ///
+    ///     let group_message = MessageBuilder::<GroupMessage>::new_group()
+    ///         .numbers(vec![
+    ///             "+10722971673".parse().unwrap(),
+    ///             "+10722971674".parse().unwrap(),
+    ///         ])
+    ///         .content("Hello, group!".into())
+    ///         .build()
+    ///         .unwrap();
+    ///
+    ///     match client.send_group_message(&group_message).await {
+    ///         Ok(response) => println!("Group message sent: {:?}", response),
+    ///         Err(e) => error!("Error sending group message: {:?}", e),
+    ///     }
+    /// }
+    /// ```
+    pub async fn send_group_message(
+        &self,
+        message: &GroupMessage,
+    ) -> Result<GroupMessageResponse, SendblueError> {
+        let url = format!("{}/send-group-message", self.base_url);
+
+        let response = self.client.post(&url).json(message).send().await?;
+
+        self.process_response::<GroupMessageResponse>(response)
+            .await
     }
 
     /// Retrieves messages using the Sendblue API
@@ -375,28 +461,10 @@ impl Client {
         params: GetMessagesParams,
     ) -> Result<GetMessagesResponse, SendblueError> {
         let url = format!("{}/accounts/messages", self.base_url);
-        let mut headers = reqwest::header::HeaderMap::new();
-        headers.insert("sb-api-key-id", self.api_key.parse().unwrap());
-        headers.insert("sb-api-secret-key", self.api_secret.parse().unwrap());
 
-        let response = self
-            .client
-            .get(&url)
-            .headers(headers)
-            .query(&params)
-            .send()
-            .await?;
+        let response = self.client.get(&url).query(&params).send().await?;
 
-        match response.status() {
-            reqwest::StatusCode::OK => {
-                let messages_response = response.json::<GetMessagesResponse>().await?;
-                Ok(messages_response)
-            }
-            reqwest::StatusCode::BAD_REQUEST => {
-                Err(SendblueError::BadRequest(response.text().await?))
-            }
-            _ => Err(SendblueError::Unknown(response.text().await?)),
-        }
+        self.process_response::<GetMessagesResponse>(response).await
     }
 
     /// Evaluates if a number can send/receive iMessages using the Sendblue API
@@ -435,28 +503,16 @@ impl Client {
         evaluate_service: &EvaluateService,
     ) -> Result<EvaluateServiceResponse, SendblueError> {
         let url = format!("{}/evaluate-service", self.base_url);
-        let mut headers = reqwest::header::HeaderMap::new();
-        headers.insert("sb-api-key-id", self.api_key.parse().unwrap());
-        headers.insert("sb-api-secret-key", self.api_secret.parse().unwrap());
 
         let response = self
             .client
             .get(&url)
-            .headers(headers)
             .query(&[("number", &evaluate_service.number.to_string())])
             .send()
             .await?;
 
-        match response.status() {
-            reqwest::StatusCode::OK => {
-                let service_response = response.json::<EvaluateServiceResponse>().await?;
-                Ok(service_response)
-            }
-            reqwest::StatusCode::BAD_REQUEST => {
-                Err(SendblueError::BadRequest(response.text().await?))
-            }
-            _ => Err(SendblueError::Unknown(response.text().await?)),
-        }
+        self.process_response::<EvaluateServiceResponse>(response)
+            .await
     }
 
     /// Sends a typing indicator to a recipient using the Sendblue API
@@ -492,28 +548,50 @@ impl Client {
         number: String,
     ) -> Result<TypingIndicatorResponse, SendblueError> {
         let url = format!("{}/send-typing-indicator", self.base_url);
-        let mut headers = reqwest::header::HeaderMap::new();
-        headers.insert("sb-api-key-id", self.api_key.parse().unwrap());
-        headers.insert("sb-api-secret-key", self.api_secret.parse().unwrap());
+
         let body = serde_json::json!({ "number": number.to_string() });
 
-        let response = self
-            .client
-            .post(&url)
-            .headers(headers)
-            .json(&body)
-            .send()
-            .await?;
+        let response = self.client.post(&url).json(&body).send().await?;
 
-        match response.status() {
-            reqwest::StatusCode::OK => {
-                let typing_indicator_response = response.json::<TypingIndicatorResponse>().await?;
-                Ok(typing_indicator_response)
+        self.process_response::<TypingIndicatorResponse>(response)
+            .await
+    }
+}
+
+impl Client {
+    async fn process_response<T>(&self, response: reqwest::Response) -> Result<T, SendblueError>
+    where
+        T: serde::de::DeserializeOwned + Debug,
+    {
+        let status = response.status();
+        let response_text = response.text().await.unwrap_or_default();
+
+        match status {
+            reqwest::StatusCode::OK | reqwest::StatusCode::ACCEPTED => {
+                match serde_json::from_str::<T>(&response_text) {
+                    Ok(parsed_response) => Ok(parsed_response),
+                    Err(e) => {
+                        error!("Error decoding response: {}", e);
+                        error!("Response body: {}", response_text);
+                        Err(SendblueError::Unknown(format!(
+                            "Failed to decode response: {}",
+                            e
+                        )))
+                    }
+                }
             }
             reqwest::StatusCode::BAD_REQUEST => {
-                Err(SendblueError::BadRequest(response.text().await?))
+                error!("Bad request: {}", response_text);
+                Err(SendblueError::BadRequest(response_text))
             }
-            _ => Err(SendblueError::Unknown(response.text().await?)),
+            _ => {
+                error!(
+                    "Unhandled Status: {}\nResponse body: {}",
+                    status, response_text
+                );
+                error!("Please open an issue on https://github.com/NewtTheWolf/sendblue-rs/issues");
+                Err(SendblueError::Unknown(response_text))
+            }
         }
     }
 }

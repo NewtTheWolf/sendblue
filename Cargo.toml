@@ -1,6 +1,6 @@
 [package]
 name = "sendblue"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
 rust-version = "1.79"
 authors = ["NewtTheWolf <dominik@spitzli.dev>"]
@@ -28,6 +28,8 @@ chrono = { version = "0.4", features = ["serde"] }
 schemars = { version = "0.8.0", features = ["chrono"], optional = true }
 serde_with = { version = "3.9.0", features = ["schemars_0_8"] }
 tracing = "0.1.40"
+bytes = { version = "1.7", optional = true }
+base64 = { version = "0.22.1", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -40,6 +42,7 @@ httpmock = "0.7.0"
 [features]
 default = []
 schemars = ["dep:schemars"]
+convert = ["dep:bytes", "dep:base64"]
 
 [profile.release]
 opt-level = 3
