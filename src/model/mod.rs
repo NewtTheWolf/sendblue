@@ -7,14 +7,14 @@ pub mod callback_url;
 pub mod evaluate_service;
 pub mod media_url;
 pub mod message;
-//pub mod phonenumber;
+pub mod phonenumber;
 pub mod send_style;
 pub mod status;
 pub mod typing_indicator;
 pub mod voice_note;
 
 pub use callback_url::CallbackUrl;
-pub use evaluate_service::{EvaluateService, EvaluateServiceBuilder, EvaluateServiceResponse};
+pub use evaluate_service::{EvaluateService, EvaluateServiceResponse};
 pub use media_url::MediaUrl;
 pub use message::{
     GetMessagesParams, GetMessagesParamsBuilder, GetMessagesResponse, GroupMessage,
