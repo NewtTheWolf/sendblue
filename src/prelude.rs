@@ -5,8 +5,8 @@
 
 pub use crate::errors::SendblueError;
 pub use crate::model::{
-    CallbackUrl, EvaluateService, EvaluateServiceBuilder, EvaluateServiceResponse, MediaUrl,
-    Message, MessageBuilder, MessageResponse, SendStyle, Status, TypingIndicatorResponse,
-    VoiceNote,
+    CallbackUrl, EvaluateService, EvaluateServiceResponse, MediaUrl, Message, MessageBuilder,
+    MessageResponse, SendStyle, Status, TypingIndicatorResponse, VoiceNote,
 };
 pub use crate::r#trait::Url;
+pub use phonenumber;
