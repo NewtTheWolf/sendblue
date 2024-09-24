@@ -3,7 +3,7 @@
 //! This module provides the data models for evaluating if a number can send/receive iMessages,
 //! including the request and response structures.
 
-use phonenumber::PhoneNumber;
+use super::{phonenumber::deserialize_phone_number, PhoneNumber};
 use serde::{Deserialize, Serialize};
 
 /// Request parameters for evaluating if a number can send/receive iMessages
