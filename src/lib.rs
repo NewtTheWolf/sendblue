@@ -221,8 +221,6 @@ impl Client {
             .build()
             .unwrap_or_else(|e| panic!("Failed to create HTTP client: {}", e));
 
-        println!("App user agent: {}", APP_USER_AGENT);
-
         Client {
             api_key,
             api_secret,
