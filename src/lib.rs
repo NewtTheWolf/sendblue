@@ -500,7 +500,7 @@ impl Client {
     /// ```
     pub async fn evaluate_service(
         &self,
-        evaluate_service: &EvaluateService,
+        evaluate_service: EvaluateService,
     ) -> Result<EvaluateServiceResponse, SendblueError> {
         let url = format!("{}/evaluate-service", self.base_url);
 
