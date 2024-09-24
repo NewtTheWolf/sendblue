@@ -6,7 +6,10 @@
 use super::{phonenumber::deserialize_phone_number, PhoneNumber};
 use serde::{Deserialize, Serialize};
 
-/// Request parameters for evaluating if a number can send/receive iMessages
+#[cfg(feature = "schemars")]
+use schemars::JsonSchema;
+
+/// Request parameters for evaluating if a number can send/receive iMessages.
 ///
 /// # Examples
 ///
@@ -58,6 +61,8 @@ impl Default for EvaluateServiceBuilder {
     fn default() -> Self {
         Self::new()
     }
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[serde(rename_all = "camelCase")]
 }
 
 /// Response from the Sendblue API for evaluating if a number can send/receive iMessages
@@ -73,6 +78,7 @@ impl Default for EvaluateServiceBuilder {
 /// };
 /// ```
 #[derive(Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub struct EvaluateServiceResponse {
     pub number: String,
     pub service: String,
