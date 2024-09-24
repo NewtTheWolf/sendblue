@@ -3,14 +3,16 @@
 //! This module provides the data model for media URLs used in the Sendblue API.
 
 use crate::r#trait::Url;
-use schemars::{
-    schema::{InstanceType, Schema, SchemaObject},
-    JsonSchema,
-};
 use serde::{Deserialize, Serialize};
 use std::{fmt, ops::Deref, str::FromStr};
 use url::Url as RawUrl;
 use validator::ValidationError;
+
+#[cfg(feature = "schemars")]
+use schemars::{
+    schema::{InstanceType, Schema, SchemaObject},
+    JsonSchema,
+};
 
 /// A URL for general media, can be any valid URL
 ///
@@ -82,6 +84,7 @@ impl Deref for MediaUrl {
     }
 }
 
+#[cfg(feature = "schemars")]
 impl JsonSchema for MediaUrl {
     fn schema_name() -> String {
         "MediaUrl".to_string()
