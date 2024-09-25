@@ -29,7 +29,6 @@ tracing = "0.1.40"
 bytes = { version = "1.7", optional = true }
 base64 = { version = "0.22.1", optional = true }
 garde = { version = "0.20.0", features = ["phone-number"] }
-validators = { version = "0.25", features = ["derive"] }
 phonenumber = "0.3"
 
 [dev-dependencies]

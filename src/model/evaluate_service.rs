@@ -4,6 +4,7 @@
 //! including the request and response structures.
 
 use super::PhoneNumber;
+use crate::model::phonenumber::deserialize_phone_number;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "schemars")]
@@ -42,6 +43,7 @@ pub enum EvaluateServiceType {
 #[derive(Serialize, Deserialize, Debug)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub struct EvaluateServiceResponse {
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub number: PhoneNumber,
     pub service: EvaluateServiceType,
 }
