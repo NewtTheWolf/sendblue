@@ -9,4 +9,3 @@ pub use crate::model::{
     MessageResponse, SendStyle, Status, TypingIndicatorResponse, VoiceNote,
 };
 pub use crate::r#trait::Url;
-pub use phonenumber;

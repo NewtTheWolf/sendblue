@@ -3,7 +3,7 @@
 //! This module provides the data models for messages used in the Sendblue API, including
 //! individual and group messages, their builders, and response structures.
 
-use super::{ErrorCode, Status};
+use super::{ErrorCode, PhoneNumber, Status};
 use crate::{
     model::{
         /* phonenumber::deserialize_phone_number, */ /* phonenumber::{deserialize_option_phone_number,
@@ -17,7 +17,6 @@ use crate::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
-use validator::Validate;
 
 #[cfg(feature = "schemars")]
 use schemars::{schema::Schema, schema_for, JsonSchema};
@@ -34,13 +33,14 @@ use schemars::{schema::Schema, schema_for, JsonSchema};
 ///     .build()
 ///     .unwrap();
 /// ```
-#[derive(Serialize, Deserialize, Validate, Debug)]
+use validators::prelude::*;
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Message {
     /// The recipient's phone number in E.164 format
     /* #[serde(serialize_with = "serialize_phone_number")] */
-    pub number: String,
+    pub number: PhoneNumber,
     /// The content of the message (optional)
-    #[validate(length(min = 1))]
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub content: Option<String>,
     /// The URL of the media to be sent (optional)
@@ -323,15 +323,14 @@ pub struct GetMessagesResponse {
 ///     status_callback: Some(CallbackUrl::new("https://example.com/message-status/1234abcd").unwrap()),
 /// };
 /// ```
-#[derive(Serialize, Deserialize, Validate, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GroupMessage {
     /// An array of E.164-formatted phone numbers of the desired recipients in a group chat.
     /* #[serde(deserialize_with = "deserialize_option_vec_phone_number")] */
-    pub numbers: Option<Vec<String>>,
+    pub numbers: Option<Vec<PhoneNumber>>,
     /// The group ID to message an existing group.
     pub group_id: Option<String>,
     /// The content of the message.
-    #[validate(length(min = 1))]
     pub content: Option<String>,
     /// A URL to a media file to send to the group.
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -417,7 +416,7 @@ impl MessageBuilder<Message> {
     ///
     /// let builder = MessageBuilder::new(phonenumber::parse(None, "+1234567890").unwrap());
     /// ```
-    pub fn new(number: String) -> Self {
+    pub fn new(number: PhoneNumber) -> Self {
         Self {
             message: Some(Message {
                 number,
@@ -534,13 +533,11 @@ impl MessageBuilder<Message> {
     ///     .unwrap();
     /// ```
     pub fn build(self) -> Result<Message, SendblueError> {
-        if let Some(msg) = self.message {
-            msg.validate()
-                .map_err(|e| SendblueError::ValidationError(e.to_string()))?;
-            Ok(msg)
+        if let Some(message) = self.message {
+            Ok(message)
         } else {
             Err(SendblueError::ValidationError(
-                "Message not initialized".into(),
+                "GroupMessage not initialized".into(),
             ))
         }
     }
@@ -585,7 +582,7 @@ impl MessageBuilder<GroupMessage> {
     /// let builder = MessageBuilder::new_group()
     ///     .numbers(vec![phonenumber::parse(None, "+19998887777").unwrap(), phonenumber::parse(None, "+17778889999").unwrap()]);
     /// ```
-    pub fn numbers(mut self, numbers: Vec<String>) -> Self {
+    pub fn numbers(mut self, numbers: Vec<PhoneNumber>) -> Self {
         if let Some(ref mut grp_msg) = self.group_message {
             grp_msg.numbers = Some(numbers);
         }
@@ -730,9 +727,6 @@ impl MessageBuilder<GroupMessage> {
                     "Either content or media_url must be provided".into(),
                 ));
             }
-            grp_msg
-                .validate()
-                .map_err(|e| SendblueError::ValidationError(e.to_string()))?;
             Ok(grp_msg)
         } else {
             Err(SendblueError::ValidationError(

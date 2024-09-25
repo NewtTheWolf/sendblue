@@ -3,7 +3,7 @@
 //! This module provides the data models for evaluating if a number can send/receive iMessages,
 //! including the request and response structures.
 
-use super::{phonenumber::deserialize_phone_number, PhoneNumber};
+use super::PhoneNumber;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "schemars")]
@@ -42,7 +42,6 @@ pub enum EvaluateServiceType {
 #[derive(Serialize, Deserialize, Debug)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub struct EvaluateServiceResponse {
-    #[serde(deserialize_with = "deserialize_phone_number")]
     pub number: PhoneNumber,
     pub service: EvaluateServiceType,
 }

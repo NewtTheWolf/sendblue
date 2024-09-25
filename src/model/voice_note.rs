@@ -8,7 +8,6 @@ use crate::{r#trait::Url, SendblueError};
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 use url::Url as RawUrl;
-use validator::ValidationError;
 
 #[cfg(feature = "convert")]
 use bytes::Bytes;
@@ -27,13 +26,14 @@ use bytes::Bytes;
 pub struct VoiceNote(RawUrl);
 
 impl Url for VoiceNote {
-    fn new(url: &str) -> Result<Self, ValidationError> {
-        let url = RawUrl::parse(url).map_err(|_| ValidationError::new("invalid url format"))?;
+    fn new(url: &str) -> Result<Self, SendblueError> {
+        let url = RawUrl::parse(url)
+            .map_err(|_| SendblueError::ValidationError("invalid url format".to_owned()))?;
         if url.path().ends_with(".caf") {
             Ok(Self(url))
         } else {
-            Err(ValidationError::new(
-                "invalid voice note url format, must end with .caf",
+            Err(SendblueError::ValidationError(
+                "invalid voice note url format, must end with .caf".to_owned(),
             ))
         }
     }

@@ -2,11 +2,10 @@
 //!
 //! This module provides the data model for media URLs used in the Sendblue API.
 
-use crate::r#trait::Url;
+use crate::{r#trait::Url, SendblueError};
 use serde::{Deserialize, Serialize};
 use std::{fmt, ops::Deref, str::FromStr};
 use url::Url as RawUrl;
-use validator::ValidationError;
 
 #[cfg(feature = "schemars")]
 use schemars::{
@@ -28,8 +27,9 @@ use schemars::{
 pub struct MediaUrl(RawUrl);
 
 impl Url for MediaUrl {
-    fn new(url: &str) -> Result<Self, ValidationError> {
-        let raw_url = RawUrl::parse(url).map_err(|_| ValidationError::new("invalid url format"))?;
+    fn new(url: &str) -> Result<Self, SendblueError> {
+        let raw_url = RawUrl::parse(url)
+            .map_err(|_| SendblueError::ValidationError("invalid url format".to_owned()))?;
         Ok(Self(raw_url))
     }
 
@@ -49,10 +49,11 @@ impl fmt::Display for MediaUrl {
 }
 
 impl FromStr for MediaUrl {
-    type Err = ValidationError;
+    type Err = SendblueError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let raw_url = RawUrl::parse(s).map_err(|_| ValidationError::new("invalid url format"))?;
+        let raw_url = RawUrl::parse(s)
+            .map_err(|_| SendblueError::ValidationError("invalid url format".to_owned()))?;
         Ok(Self(raw_url))
     }
 }

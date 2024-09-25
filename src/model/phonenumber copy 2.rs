@@ -1,4 +1,3 @@
-use phonenumber::parse;
 use std::ops::Deref;
 use validators::prelude::*;
 use validators_prelude::phonenumber::PhoneNumber as RawPhoneNumber;
@@ -15,12 +14,6 @@ use schemars::{
 #[derive(Validator, Debug, Clone, PartialEq, Eq)]
 #[validator(phone)]
 pub struct PhoneNumber(pub RawPhoneNumber);
-
-impl PhoneNumber {
-    pub fn new(phone_number: &str) -> Result<Self, phonenumber::ParseError> {
-        parse(None, phone_number).map(PhoneNumber)
-    }
-}
 
 impl Deref for PhoneNumber {
     type Target = RawPhoneNumber;

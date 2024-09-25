@@ -3,7 +3,8 @@
 //! This module provides a trait for handling URLs with default implementations for common operations.
 
 use url::Url as RawUrl;
-use validator::ValidationError;
+
+use crate::SendblueError;
 
 /// A trait for handling URLs with default implementations for common operations.
 ///
@@ -22,8 +23,9 @@ pub trait Url: Sized {
     /// # Errors
     ///
     /// Returns a `ValidationError` if the URL is invalid.
-    fn new(url: &str) -> Result<Self, ValidationError> {
-        let raw_url = RawUrl::parse(url).map_err(|_| ValidationError::new("invalid url format"))?;
+    fn new(url: &str) -> Result<Self, SendblueError> {
+        let raw_url = RawUrl::parse(url)
+            .map_err(|_| SendblueError::ValidationError("invalid url format".to_owned()))?;
         Ok(Self::from_raw_url(raw_url))
     }
 

@@ -2,10 +2,9 @@
 //!
 //! This module provides the request and response models for typing indicators used in the Sendblue API.
 
-use phonenumber::PhoneNumber;
 use serde::{Deserialize, Serialize};
-/*
-use crate::models::deserialize_phone_number; */
+
+use super::PhoneNumber;
 
 /// Status of the typing indicator in the Sendblue API
 ///

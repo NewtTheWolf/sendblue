@@ -2,10 +2,9 @@
 //!
 //! This module provides the data model for callback URLs used in the Sendblue API.
 
-use crate::r#trait::Url;
+use crate::{r#trait::Url, SendblueError};
 use serde::{Deserialize, Serialize};
 use url::Url as RawUrl;
-use validator::ValidationError;
 
 /// A URL for status callback, must be a valid URL
 ///
@@ -21,8 +20,9 @@ use validator::ValidationError;
 pub struct CallbackUrl(RawUrl);
 
 impl Url for CallbackUrl {
-    fn new(url: &str) -> Result<Self, ValidationError> {
-        let url = RawUrl::parse(url).map_err(|_| ValidationError::new("invalid url format"))?;
+    fn new(url: &str) -> Result<Self, SendblueError> {
+        let url = RawUrl::parse(url)
+            .map_err(|_| SendblueError::ValidationError("invalid url format".to_owned()))?;
         Ok(Self(url))
     }
 
