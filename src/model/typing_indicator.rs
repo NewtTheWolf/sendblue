@@ -3,7 +3,7 @@
 //! This module provides the request and response models for typing indicators used in the Sendblue API.
 
 use serde::{Deserialize, Serialize};
-
+use crate::model::phonenumber::deserialize_phone_number;
 use super::PhoneNumber;
 
 /// Status of the typing indicator in the Sendblue API
@@ -28,12 +28,11 @@ pub enum TypingIndicatorStatus {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TypingIndicatorResponse {
     /// The number you evaluated in E.164 format
-    /* #[serde(deserialize_with = "deserialize_phone_number")] */
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub number: PhoneNumber,
     /// The status of the typing indicator you tried to send (this will either be SENT or ERROR)
     pub status: TypingIndicatorStatus,
     /// The error message if the status is ERROR (optional)
-    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub error_message: Option<String>,
 }
 
@@ -55,6 +54,6 @@ pub struct TypingIndicatorResponse {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TypingIndicator {
     /// The phone number to send the typing indicator to
-    /* #[serde(deserialize_with = "deserialize_phone_number")] */
+    #[serde(deserialize_with = "deserialize_phone_number")]
     pub number: PhoneNumber,
 }

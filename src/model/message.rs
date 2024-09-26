@@ -4,7 +4,10 @@
 //! individual and group messages, their builders, and response structures.
 
 use super::{ErrorCode, PhoneNumber, Status};
-use crate::model::phonenumber::{deserialize_phone_number, serialize_phone_number};
+use crate::model::phonenumber::{
+    deserialize_option_phone_number, deserialize_option_vec_phone_number, deserialize_phone_number,
+    deserialize_vec_phone_number, serialize_phone_number,
+};
 use crate::{
     model::{
         /* phonenumber::deserialize_phone_number, */ /* phonenumber::{deserialize_option_phone_number,
@@ -198,8 +201,8 @@ impl JsonSchema for MessageStatusCallback {
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct GetMessagesParams {
     pub cid: Option<String>,
-    /* #[serde(deserialize_with = "deserialize_option_phone_number")] */
-    pub number: Option<String>,
+    #[serde(deserialize_with = "deserialize_option_phone_number")]
+    pub number: Option<PhoneNumber>,
     pub limit: Option<u32>,
     pub offset: Option<u32>,
     pub from_date: Option<String>, // or use a more specific date type
@@ -209,25 +212,25 @@ pub struct GetMessagesParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RetrievedMessage {
     /// The date the message was sent
-    pub date: String,
+    pub date: DateTime<Utc>,
     /// Whether SMS is allowed
     #[serde(rename = "allowSMS")]
     pub allow_sms: Option<bool>,
     /// The style of the message
     #[serde(rename = "sendStyle")]
-    pub send_style: Option<String>,
+    pub send_style: Option<SendStyle>,
     /// The type of the message
     #[serde(rename = "type")]
     pub message_type: String,
     /// The unique ID of the message
     pub uuid: String,
     /// The URL to a media attachment
-    pub media_url: Option<String>,
+    pub media_url: Option<MediaUrl>,
     /// The content of the message
     pub content: Option<String>,
     /// The recipient's phone number
-    /* #[serde(deserialize_with = "deserialize_option_phone_number")] */
-    pub number: Option<String>,
+    #[serde(deserialize_with = "deserialize_option_phone_number")]
+    pub number: Option<PhoneNumber>,
     /// Whether the message is outbound
     pub is_outbound: bool,
     /// The email of the account
@@ -294,7 +297,7 @@ pub struct GetMessagesResponse {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GroupMessage {
     /// An array of E.164-formatted phone numbers of the desired recipients in a group chat.
-    /* #[serde(deserialize_with = "deserialize_option_vec_phone_number")] */
+    #[serde(deserialize_with = "deserialize_option_vec_phone_number")]
     pub numbers: Option<Vec<PhoneNumber>>,
     /// The group ID to message an existing group.
     pub group_id: Option<String>,
@@ -330,7 +333,7 @@ pub struct GroupMessageResponse {
     /// The status of the message
     pub status: Status,
     /// The error code, if any
-    pub error_code: Option<i32>,
+    pub error_code: Option<ErrorCode>,
     /// The error message, if any
     pub error_message: Option<String>,
     /// The message handle
@@ -340,14 +343,14 @@ pub struct GroupMessageResponse {
     /// The date the message was updated
     pub date_updated: DateTime<Utc>,
     /// The sender's phone number
-    /*#[serde(deserialize_with = "deserialize_phone_number")]*/
-    pub from_number: String,
+    #[serde(deserialize_with = "deserialize_phone_number")]
+    pub from_number: PhoneNumber,
     /// The recipient phone numbers
-    /* #[serde(deserialize_with = "deserialize_vec_phone_number")] */
-    pub number: Vec<String>,
+    #[serde(deserialize_with = "deserialize_vec_phone_number")]
+    pub number: Vec<PhoneNumber>,
     /// The recipient phone numbers (alternative)
-    /* #[serde(deserialize_with = "deserialize_vec_phone_number")] */
-    pub to_number: Vec<String>,
+    #[serde(deserialize_with = "deserialize_vec_phone_number")]
+    pub to_number: Vec<PhoneNumber>,
     /// Whether the message was downgraded
     pub was_downgraded: Option<bool>,
     /// The plan of the message
@@ -719,8 +722,8 @@ impl MessageBuilder<GroupMessage> {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetMessagesParamsBuilder {
     cid: Option<String>,
-    /* #[serde(deserialize_with = "deserialize_option_phone_number")] */
-    number: Option<String>,
+    #[serde(deserialize_with = "deserialize_option_phone_number")]
+    number: Option<PhoneNumber>,
     limit: Option<u32>,
     offset: Option<u32>,
     from_date: Option<String>,
@@ -742,7 +745,7 @@ impl GetMessagesParamsBuilder {
         self
     }
 
-    pub fn number(mut self, number: Option<String>) -> Self {
+    pub fn number(mut self, number: Option<PhoneNumber>) -> Self {
         self.number = number;
         self
     }
